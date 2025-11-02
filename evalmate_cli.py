@@ -1,0 +1,544 @@
+#!/usr/bin/env python3
+"""
+EvalMate CLI - Unified Terminal Interface for Assignment Evaluation
+
+This CLI tool provides a complete end-to-end evaluation workflow, allowing users to:
+- Select rubrics, questions, and submissions from the repository
+- Build fusion context and run LLM evaluations
+- View colorized results and export to JSON/CSV
+- Operate entirely from the terminal without web UI dependencies
+
+Usage:
+    uv run python evalmate_cli.py run
+"""
+
+import os
+import json
+import sys
+from datetime import datetime
+from typing import List, Dict, Any, Optional
+
+# Set UTF-8 encoding for Windows compatibility
+if os.name == 'nt':  # Windows
+    os.environ['PYTHONIOENCODING'] = 'utf-8'
+    # Try to set console to UTF-8 mode
+    try:
+        import locale
+        locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+    except:
+        pass
+
+import typer
+from rich.console import Console
+from rich.table import Table
+from rich.panel import Panel
+from rich.prompt import Prompt, IntPrompt
+from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich import box
+
+# EvalMate core imports
+from app.core.fusion.builder import build_fusion_context
+from app.core.llm.evaluator import evaluate_submission
+from app.core.store import repo
+from app.core.models.schemas import EvalResult
+
+# Initialize Rich console and Typer app
+console = Console()
+app = typer.Typer(help="EvalMate CLI - Automated multimodal grading assistant")
+
+
+def display_banner():
+    """Display the EvalMate CLI welcome banner."""
+    banner = """
+[bold cyan]
+===================================
+        EvalMate CLI
+ Automated Multimodal Grading
+===================================
+[/bold cyan]
+
+[dim]End-to-end student assignment evaluation with AI-powered feedback[/dim]
+"""
+    console.print(Panel(banner, border_style="cyan", padding=(1, 2)))
+
+
+def list_and_choose_rubric() -> str:
+    """List available rubrics and let user choose one."""
+    all_rubrics = repo.list_rubrics()
+    if not all_rubrics:
+        console.print("[red]ERROR: No rubrics found in repository![/red]")
+        console.print("[yellow]TIP: Upload rubrics through the web interface or API first[/yellow]")
+        raise typer.Exit(1)
+    
+    # Filter rubrics that have both questions and submissions
+    all_questions = repo.list_questions()
+    all_submissions = repo.list_submissions()
+    
+    rubrics = []
+    for rubric in all_rubrics:
+        # Check if this rubric has questions
+        has_questions = any(q.get('rubric_id') == rubric['id'] for q in all_questions)
+        # Check if this rubric has submissions
+        has_submissions = any(s.get('rubric_id') == rubric['id'] for s in all_submissions)
+        
+        if has_questions and has_submissions:
+            rubrics.append(rubric)
+    
+    if not rubrics:
+        console.print("[red]ERROR: No rubrics found with both questions and submissions![/red]")
+        console.print(f"[yellow]TIP: Found {len(all_rubrics)} total rubrics, but none have complete data sets[/yellow]")
+        console.print("[dim]Tip: Upload questions and submissions through the web interface[/dim]")
+        raise typer.Exit(1)
+    
+    console.print("\n[bold cyan]Available Rubrics[/bold cyan]")
+    
+    # Create a table for rubrics
+    table = Table(box=box.SIMPLE)
+    table.add_column("#", style="cyan", no_wrap=True, width=3)
+    table.add_column("Course", style="green", no_wrap=True)
+    table.add_column("Assignment", style="yellow")
+    table.add_column("Version", style="magenta", no_wrap=True, width=8)
+    table.add_column("Created", style="dim", no_wrap=True)
+    
+    for i, rubric in enumerate(rubrics, 1):
+        created_date = rubric.get('created_at', 'Unknown')
+        if created_date and created_date != 'Unknown':
+            try:
+                # Format the date nicely
+                from datetime import datetime
+                dt = datetime.fromisoformat(created_date.replace('Z', '+00:00'))
+                created_date = dt.strftime('%Y-%m-%d %H:%M')
+            except:
+                pass
+        
+        table.add_row(
+            str(i),
+            rubric.get('course', 'N/A'),
+            rubric.get('assignment', 'N/A'),
+            rubric.get('version', 'N/A'),
+            created_date
+        )
+    
+    console.print(table)
+    
+    while True:
+        try:
+            choice = IntPrompt.ask(
+                "\n[bold]Select rubric number",
+                default=1,
+                show_default=True
+            )
+            if 1 <= choice <= len(rubrics):
+                selected_rubric = rubrics[choice - 1]
+                console.print(f"[green]SELECTED: {selected_rubric['course']} - {selected_rubric['assignment']}[/green]")
+                return selected_rubric['id']
+            else:
+                console.print(f"[red]Please enter a number between 1 and {len(rubrics)}[/red]")
+        except KeyboardInterrupt:
+            console.print("\n[yellow]Cancelled by user[/yellow]")
+            raise typer.Exit(0)
+
+
+def list_and_choose_question(rubric_id: str) -> str:
+    """List available questions for the selected rubric and let user choose one."""
+    questions = repo.list_questions(rubric_id)
+    if not questions:
+        console.print(f"[red]ERROR: No questions found for rubric {rubric_id}![/red]")
+        raise typer.Exit(1)
+    
+    console.print("\n[bold cyan]Available Questions[/bold cyan]")
+    
+    # Create a table for questions
+    table = Table(box=box.SIMPLE)
+    table.add_column("#", style="cyan", no_wrap=True, width=3)
+    table.add_column("Question ID", style="yellow")
+    table.add_column("Created", style="dim", no_wrap=True)
+    
+    for i, question in enumerate(questions, 1):
+        created_date = question.get('created_at', 'Unknown')
+        if created_date and created_date != 'Unknown':
+            try:
+                # Format the date nicely
+                from datetime import datetime
+                dt = datetime.fromisoformat(created_date.replace('Z', '+00:00'))
+                created_date = dt.strftime('%Y-%m-%d %H:%M')
+            except:
+                pass
+        
+        # Truncate long IDs for display
+        display_id = question['id']
+        if len(display_id) > 40:
+            display_id = display_id[:37] + "..."
+        
+        table.add_row(
+            str(i),
+            display_id,
+            created_date
+        )
+    
+    console.print(table)
+    
+    while True:
+        try:
+            choice = IntPrompt.ask(
+                "\n[bold]Select question number",
+                default=1,
+                show_default=True
+            )
+            if 1 <= choice <= len(questions):
+                selected_question = questions[choice - 1]
+                console.print(f"[green]SELECTED question: {selected_question['id'][:20]}...[/green]")
+                return selected_question['id']
+            else:
+                console.print(f"[red]Please enter a number between 1 and {len(questions)}[/red]")
+        except KeyboardInterrupt:
+            console.print("\n[yellow]Cancelled by user[/yellow]")
+            raise typer.Exit(0)
+
+
+def list_and_choose_submission(rubric_id: str, question_id: str) -> str:
+    """List available submissions for the selected rubric/question and let user choose one."""
+    submissions = repo.list_submissions(rubric_id)
+    
+    # Filter submissions that match both rubric_id and question_id
+    filtered_submissions = [
+        sub for sub in submissions 
+        if sub.get('question_id') == question_id
+    ]
+    
+    if not filtered_submissions:
+        console.print(f"[red]ERROR: No submissions found for the selected rubric and question![/red]")
+        console.print(f"[dim]Rubric: {rubric_id}[/dim]")
+        console.print(f"[dim]Question: {question_id}[/dim]")
+        raise typer.Exit(1)
+    
+    console.print("\n[bold cyan]Available Submissions[/bold cyan]")
+    
+    # Create a table for submissions
+    table = Table(box=box.SIMPLE)
+    table.add_column("#", style="cyan", no_wrap=True, width=3)
+    table.add_column("Student", style="green")
+    table.add_column("Submission ID", style="yellow")
+    table.add_column("Created", style="dim", no_wrap=True)
+    
+    for i, submission in enumerate(filtered_submissions, 1):
+        created_date = submission.get('created_at', 'Unknown')
+        if created_date and created_date != 'Unknown':
+            try:
+                # Format the date nicely
+                from datetime import datetime
+                dt = datetime.fromisoformat(created_date.replace('Z', '+00:00'))
+                created_date = dt.strftime('%Y-%m-%d %H:%M')
+            except:
+                pass
+        
+        # Truncate long IDs for display
+        display_id = submission['id']
+        if len(display_id) > 40:
+            display_id = display_id[:37] + "..."
+        
+        table.add_row(
+            str(i),
+            submission.get('student', 'Unknown'),
+            display_id,
+            created_date
+        )
+    
+    console.print(table)
+    
+    while True:
+        try:
+            choice = IntPrompt.ask(
+                "\n[bold]Select submission number",
+                default=1,
+                show_default=True
+            )
+            if 1 <= choice <= len(filtered_submissions):
+                selected_submission = filtered_submissions[choice - 1]
+                console.print(f"[green]SELECTED submission by: {selected_submission.get('student', 'Unknown')}[/green]")
+                return selected_submission['id']
+            else:
+                console.print(f"[red]Please enter a number between 1 and {len(filtered_submissions)}[/red]")
+        except KeyboardInterrupt:
+            console.print("\n[yellow]Cancelled by user[/yellow]")
+            raise typer.Exit(0)
+
+
+def display_evaluation_results(result: EvalResult):
+    """Display evaluation results in a formatted table."""
+    console.print("\n[bold green]EVALUATION COMPLETE![/bold green]")
+    
+    # Create results table
+    table = Table(title="Rubric Evaluation Summary", box=box.DOUBLE_EDGE)
+    table.add_column("Criterion ID", style="cyan", no_wrap=True, width=15)
+    table.add_column("Score", justify="right", style="bold yellow", width=8)
+    table.add_column("Max", justify="right", style="dim", width=6)
+    table.add_column("Justification", style="white", min_width=50)
+    
+    for item in result.items:
+        # Truncate long justifications for table display
+        justification = item.justification
+        if len(justification) > 80:
+            justification = justification[:77] + "..."
+        
+        # Color-code scores
+        score_str = str(round(item.score, 1))
+        if item.score >= 80:
+            score_style = "bold green"
+        elif item.score >= 60:
+            score_style = "bold yellow"
+        else:
+            score_style = "bold red"
+        
+        table.add_row(
+            item.rubric_item_id[:12] + "..." if len(item.rubric_item_id) > 15 else item.rubric_item_id,
+            f"[{score_style}]{score_str}[/{score_style}]",
+            "100",
+            justification
+        )
+    
+    console.print(table)
+    
+    # Overall score panel
+    total_score = round(result.total, 1)
+    if total_score >= 80:
+        score_color = "bold green"
+        emoji = "EXCELLENT"
+    elif total_score >= 60:
+        score_color = "bold yellow"
+        emoji = "GOOD"
+    else:
+        score_color = "bold red"
+        emoji = "NEEDS WORK"
+    
+    score_panel = Panel(
+        f"[{score_color}]{emoji} - Total Score: {total_score}/100[/{score_color}]",
+        title="Final Grade",
+        border_style=score_color.split()[-1],
+        padding=(1, 2)
+    )
+    console.print(score_panel)
+    
+    # Overall feedback
+    if result.overall_feedback:
+        feedback_panel = Panel(
+            f"[italic]{result.overall_feedback}[/italic]",
+            title="Overall Feedback",
+            border_style="blue",
+            padding=(1, 2)
+        )
+        console.print(feedback_panel)
+
+
+def save_results(result: EvalResult) -> tuple[str, str]:
+    """Save evaluation results to JSON and CSV files."""
+    # Ensure results directory exists
+    os.makedirs("data/results", exist_ok=True)
+    
+    # Generate timestamp-based filenames
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    json_path = os.path.join("data", "results", f"eval_{timestamp}.json")
+    csv_path = os.path.join("data", "results", f"eval_{timestamp}.csv")
+    
+    # Save JSON
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(result.model_dump(), f, indent=2, ensure_ascii=False, default=str)
+    
+    # Save CSV (if pandas is available)
+    try:
+        import pandas as pd
+        
+        # Prepare data for CSV
+        csv_data = []
+        for item in result.items:
+            csv_data.append({
+                'rubric_item_id': item.rubric_item_id,
+                'score': round(item.score, 2),
+                'justification': item.justification,
+                'evidence_block_ids': ', '.join(item.evidence_block_ids) if item.evidence_block_ids else ''
+            })
+        
+        # Add overall row
+        csv_data.append({
+            'rubric_item_id': 'TOTAL',
+            'score': round(result.total, 2),
+            'justification': result.overall_feedback,
+            'evidence_block_ids': ''
+        })
+        
+        df = pd.DataFrame(csv_data)
+        df.to_csv(csv_path, index=False, encoding='utf-8')
+        
+    except ImportError:
+        console.print("[yellow]WARNING: pandas not available, skipping CSV export[/yellow]")
+        csv_path = None
+    except Exception as e:
+        console.print(f"[yellow]WARNING: CSV export failed: {e}[/yellow]")
+        csv_path = None
+    
+    return json_path, csv_path
+
+
+@app.command("run")
+def run_evaluation():
+    """
+    Run the complete EvalMate evaluation workflow.
+    
+    This command guides you through:
+    1. Selecting a rubric from the repository
+    2. Choosing a matching question
+    3. Picking a student submission
+    4. Building fusion context
+    5. Running LLM evaluation
+    6. Displaying results and optionally saving them
+    """
+    try:
+        # Display welcome banner
+        display_banner()
+        
+        # Step 1: Select rubric
+        console.print("[bold]Step 1/5:[/bold] Select a rubric")
+        rubric_id = list_and_choose_rubric()
+        
+        # Step 2: Select question
+        console.print("\n[bold]Step 2/5:[/bold] Select a question")
+        question_id = list_and_choose_question(rubric_id)
+        
+        # Step 3: Select submission
+        console.print("\n[bold]Step 3/5:[/bold] Select a submission")
+        submission_id = list_and_choose_submission(rubric_id, question_id)
+        
+        # Step 4: Build fusion context
+        console.print("\n[bold]Step 4/5:[/bold] Building fusion context...")
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console,
+            transient=True
+        ) as progress:
+            task = progress.add_task("Assembling multimodal context...", total=None)
+            try:
+                fusion = build_fusion_context(rubric_id, question_id, submission_id)
+                progress.update(task, description="SUCCESS: Fusion context built!")
+            except Exception as e:
+                progress.update(task, description=f"ERROR: Failed to build fusion context: {e}")
+                raise
+        
+        console.print(f"[green]SUCCESS: Fusion built![/green] "
+                     f"Text blocks: {fusion.text_block_count}, "
+                     f"Visuals: {fusion.visual_count}, "
+                     f"Token estimate: {fusion.token_estimate:,}")
+        
+        # Step 5: Run evaluation
+        console.print("\n[bold]Step 5/5:[/bold] Running LLM evaluation...")
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console,
+            transient=True
+        ) as progress:
+            task = progress.add_task("Evaluating with AI (this may take 1-2 minutes)...", total=None)
+            try:
+                # Capture and redirect any Unicode output that might cause issues
+                import logging
+                import sys
+                from io import StringIO
+                
+                # Temporarily redirect logging to avoid Unicode issues
+                old_stdout = sys.stdout
+                old_stderr = sys.stderr
+                log_capture = StringIO()
+                
+                # Set encoding-safe handlers
+                try:
+                    result = evaluate_submission(rubric_id, question_id, submission_id)
+                    progress.update(task, description="SUCCESS: Evaluation completed!")
+                finally:
+                    # Restore original stdout/stderr
+                    sys.stdout = old_stdout
+                    sys.stderr = old_stderr
+                    
+            except Exception as e:
+                progress.update(task, description=f"ERROR: Evaluation failed: {str(e).encode('ascii', 'ignore').decode('ascii')}")
+                raise
+        
+        # Display results
+        display_evaluation_results(result)
+        
+        # Optional: Save results
+        console.print()
+        save_choice = Prompt.ask(
+            "Save results to files?", 
+            choices=["y", "n"], 
+            default="y"
+        )
+        
+        if save_choice.lower() == "y":
+            json_path, csv_path = save_results(result)
+            console.print(f"[green]SUCCESS: Results saved to:[/green]")
+            console.print(f"   JSON: {json_path}")
+            if csv_path:
+                console.print(f"   CSV:  {csv_path}")
+        
+        # Ask about continuing
+        console.print()
+        continue_choice = Prompt.ask(
+            "Run another evaluation?", 
+            choices=["y", "n"], 
+            default="n"
+        )
+        
+        if continue_choice.lower() == "y":
+            console.print("\n" + "="*60 + "\n")
+            run_evaluation()  # Recursive call for another round
+        else:
+            console.print("\n[bold cyan]Thank you for using EvalMate CLI![/bold cyan]")
+            console.print("[dim]Happy grading![/dim]")
+        
+    except KeyboardInterrupt:
+        console.print("\n\n[yellow]Goodbye! EvalMate CLI session ended.[/yellow]")
+        raise typer.Exit(0)
+    except Exception as e:
+        console.print(f"\n[bold red]ERROR: {e}[/bold red]")
+        console.print("[dim]Check your environment setup and try again.[/dim]")
+        raise typer.Exit(1)
+
+
+@app.command("status")
+def show_status():
+    """
+    Show repository status and available data.
+    """
+    console.print("[bold cyan]EvalMate Repository Status[/bold cyan]\n")
+    
+    try:
+        # Count rubrics
+        rubrics = repo.list_rubrics()
+        console.print(f"Rubrics: [bold green]{len(rubrics)}[/bold green]")
+        
+        # Count questions
+        questions = repo.list_questions()
+        console.print(f"Questions: [bold green]{len(questions)}[/bold green]")
+        
+        # Count submissions
+        submissions = repo.list_submissions()
+        console.print(f"Submissions: [bold green]{len(submissions)}[/bold green]")
+        
+        # Count evaluations
+        try:
+            results = repo.list_eval_results()
+            console.print(f"Evaluations: [bold green]{len(results)}[/bold green]")
+        except:
+            console.print(f"Evaluations: [yellow]Unknown[/yellow]")
+        
+        if len(rubrics) > 0 and len(questions) > 0 and len(submissions) > 0:
+            console.print("\n[green]SUCCESS: Ready to run evaluations![/green]")
+        else:
+            console.print("\n[yellow]WARNING: Some data missing. Upload files through the web interface first.[/yellow]")
+            
+    except Exception as e:
+        console.print(f"[red]ERROR: Error checking status: {e}[/red]")
+
+
+if __name__ == "__main__":
+    app()

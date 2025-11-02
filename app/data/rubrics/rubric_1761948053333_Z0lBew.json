@@ -1,0 +1,40 @@
+{
+  "id": "rubric_1761948053333_Z0lBew",
+  "course": "CS101",
+  "assignment": "Assignment 1",
+  "version": "v1.0",
+  "items": [
+    {
+      "id": "block_1761948053333_qQo1aw",
+      "title": "Code Quality",
+      "description": "Evaluate code structure and style",
+      "weight": 0.4,
+      "criterion": "structure"
+    },
+    {
+      "id": "block_1761948053333_P2qA2A",
+      "title": "Correctness",
+      "description": "Verify solution correctness",
+      "weight": 0.6,
+      "criterion": "accuracy"
+    }
+  ],
+  "canonical": {
+    "id": "doc_1761948053333_Tq8mSw",
+    "title": "Sample Rubric Document",
+    "source_files": [
+      "sample_rubric.pdf"
+    ],
+    "blocks": [
+      {
+        "id": "block_1761948053333_eY3pUQ",
+        "kind": "text",
+        "text": "This is a sample rubric for testing purposes.",
+        "visual": null,
+        "page": 1,
+        "bbox": null
+      }
+    ],
+    "created_at": "2025-10-31T22:00:53.334139"
+  }
+}

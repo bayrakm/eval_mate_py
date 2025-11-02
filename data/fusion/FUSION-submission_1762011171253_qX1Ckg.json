@@ -1,0 +1,44 @@
+{
+  "id": "FUSION-submission_1762011171253_qX1Ckg",
+  "rubric_id": "rubric_1762011171252_3UAJbQ",
+  "question_id": "question_1762011171253_wq3Gnw",
+  "submission_id": "submission_1762011171253_qX1Ckg",
+  "rubric_items": [
+    {
+      "id": "rubric_item_1762011171253_wqi5sQ",
+      "title": "Accuracy",
+      "desc": "Code produces correct results",
+      "weight": 0.6,
+      "criterion": "content"
+    },
+    {
+      "id": "rubric_item_1762011171253_9b0k9g",
+      "title": "Structure",
+      "desc": "Code is well organized",
+      "weight": 0.4,
+      "criterion": "structure"
+    }
+  ],
+  "question_text": "Write a program that calculates fibonacci numbers.",
+  "submission_text": "def fibonacci(n): if n <= 1: return n return fibonacci(n-1) + fibonacci(n-2)",
+  "submission_visuals": [
+    {
+      "id": "visual_1762011171253_KblZdA",
+      "type": "figure",
+      "caption": "Flowchart showing fibonacci algorithm",
+      "ocr_text": "Start -> Input n -> Calculate -> Output",
+      "rubric_links": null
+    }
+  ],
+  "created_at": "2025-11-01T15:32:51.254258",
+  "token_estimate": 60,
+  "visual_count": 1,
+  "text_block_count": 1,
+  "metadata": {
+    "rubric_version": "v1.0",
+    "student": "alice_smith",
+    "model": "gpt-4o",
+    "fusion_builder_version": "1.0",
+    "created_by": "fusion_builder"
+  }
+}

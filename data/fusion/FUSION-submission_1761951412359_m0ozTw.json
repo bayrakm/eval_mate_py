@@ -1,0 +1,36 @@
+{
+  "id": "FUSION-submission_1761951412359_m0ozTw",
+  "rubric_id": "rubric_1761951412359_r2zSvA",
+  "question_id": "question_1761951412359_PqhfSw",
+  "submission_id": "submission_1761951412359_m0ozTw",
+  "rubric_items": [
+    {
+      "id": "block_1761951412359_9jjqgw",
+      "title": "Code Quality",
+      "desc": "Evaluate code structure and style",
+      "weight": 0.4,
+      "criterion": "structure"
+    },
+    {
+      "id": "block_1761951412359_maLCyw",
+      "title": "Correctness",
+      "desc": "Verify solution correctness",
+      "weight": 0.6,
+      "criterion": "accuracy"
+    }
+  ],
+  "question_text": "Sample text content for testing.",
+  "submission_text": "Sample text content for testing.",
+  "submission_visuals": [],
+  "created_at": "2025-11-01T17:59:05.288276",
+  "token_estimate": 27,
+  "visual_count": 0,
+  "text_block_count": 1,
+  "metadata": {
+    "rubric_version": "v1.0",
+    "student": "john_doe",
+    "model": "gpt-4o",
+    "fusion_builder_version": "1.0",
+    "created_by": "fusion_builder"
+  }
+}

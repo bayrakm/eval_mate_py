@@ -1,0 +1,40 @@
+{
+  "id": "rubric_1761947849816_eXuIgw",
+  "course": "CS101",
+  "assignment": "Test Assignment",
+  "version": "v1.0",
+  "items": [
+    {
+      "id": "block_1761947849816_FKyvRQ",
+      "title": "Code Quality",
+      "description": "Evaluate code structure and style",
+      "weight": 0.4,
+      "criterion": "structure"
+    },
+    {
+      "id": "block_1761947849816_WWQjPw",
+      "title": "Correctness",
+      "description": "Verify solution correctness",
+      "weight": 0.6,
+      "criterion": "accuracy"
+    }
+  ],
+  "canonical": {
+    "id": "doc_1761947849816_6P3EWw",
+    "title": "Sample Document",
+    "source_files": [
+      "test.pdf"
+    ],
+    "blocks": [
+      {
+        "id": "block_1761947849816_80ia8A",
+        "kind": "text",
+        "text": "Sample text content for testing.",
+        "visual": null,
+        "page": 1,
+        "bbox": null
+      }
+    ],
+    "created_at": "2025-10-31T21:57:29.816121"
+  }
+}
