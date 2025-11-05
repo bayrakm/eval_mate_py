@@ -21,11 +21,9 @@ export function RubricSelector({ selectedRubric, onSelect, onLoad, onGet }) {
       if (Array.isArray(data)) {
         setRubrics(data);
       } else {
-        console.warn("Expected array but got:", typeof data);
         setRubrics([]);
       }
     } catch (error) {
-      console.error("Failed to load rubrics:", error);
       setRubrics([]);
     } finally {
       setLoading(false);
@@ -52,7 +50,7 @@ export function RubricSelector({ selectedRubric, onSelect, onLoad, onGet }) {
         onSelect(rubric);
       }
     } catch (error) {
-      console.error("Failed to get rubric:", error);
+      // Failed to get rubric
     }
   };
 
@@ -71,7 +69,7 @@ export function RubricSelector({ selectedRubric, onSelect, onLoad, onGet }) {
         }}
       >
         <Text size="sm" fw={600}>
-          Pilih Rubric
+          Select Rubric
         </Text>
         <Button
           variant="subtle"
@@ -87,7 +85,7 @@ export function RubricSelector({ selectedRubric, onSelect, onLoad, onGet }) {
         <Loader size="sm" />
       ) : (
         <Select
-          placeholder="Pilih rubric..."
+          placeholder="Select rubric..."
           value={selectedId}
           onChange={handleSelect}
           data={rubricOptions}

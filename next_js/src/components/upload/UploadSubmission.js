@@ -9,11 +9,10 @@ export function UploadSubmission({ onUpload, loading, disabled }) {
   const [studentHandle, setStudentHandle] = useState("");
   const [file, setFile] = useState(null);
 
-  // Debug info
   const textInputDisabled = disabled || loading;
-  const fileInputDisabled = disabled || loading; // FileInput hanya disabled jika disabled prop atau loading
+  const fileInputDisabled = disabled || loading;
 
-  // Auto-upload ketika file dan studentHandle sudah ada
+  // Auto-upload when file and studentHandle are ready
   useEffect(() => {
     if (file && studentHandle.trim()) {
       onUpload(file, studentHandle.trim());
@@ -34,38 +33,14 @@ export function UploadSubmission({ onUpload, loading, disabled }) {
             Upload Submission
           </Text>
           <Text size="xs" c="dimmed">
-            Upload jawaban siswa
+            Upload student submission
           </Text>
         </div>
-
-        {/* Debug Info */}
-        <Paper p="xs" withBorder bg="blue.0">
-          <Text size="xs" fw={700} mb="xs">
-            🔍 UPLOAD SUBMISSION DEBUG:
-          </Text>
-          <Text size="xs">
-            disabled prop: {disabled ? "❌ TRUE" : "✅ FALSE"}
-          </Text>
-          <Text size="xs">loading: {loading ? "⏳ TRUE" : "✅ FALSE"}</Text>
-          <Text size="xs">
-            studentHandle: "{studentHandle}" (length: {studentHandle.length})
-          </Text>
-          <Text size="xs">file: {file ? `✅ ${file.name}` : "❌ null"}</Text>
-          <Text size="xs">
-            TextInput disabled: {textInputDisabled ? "❌ TRUE" : "✅ FALSE"}
-          </Text>
-          <Text size="xs" fw={600} c={fileInputDisabled ? "red" : "green"}>
-            FileInput disabled: {fileInputDisabled ? "❌ TRUE" : "✅ FALSE"}
-          </Text>
-          <Text size="xs" c={file && studentHandle.trim() ? "green" : "orange"}>
-            Ready to upload: {file && studentHandle.trim() ? "✅ YES" : "⏳ NO"}
-          </Text>
-        </Paper>
 
         <TextInput
           placeholder={
             disabled
-              ? "Pilih rubric dan question terlebih dahulu"
+              ? "Please select a rubric and question first"
               : "Student handle/ID"
           }
           value={studentHandle}
@@ -77,7 +52,7 @@ export function UploadSubmission({ onUpload, loading, disabled }) {
 
         <FileInput
           leftSection={<IconFileText size={18} />}
-          placeholder="Pilih file submission"
+          placeholder="Select submission file"
           accept={FILE_TYPES.SUBMISSION.accept}
           onChange={handleFileChange}
           disabled={fileInputDisabled}

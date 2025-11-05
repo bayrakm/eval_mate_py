@@ -19,13 +19,13 @@ export function UploadRubric({ onUpload, loading }) {
             Upload Rubric
           </Text>
           <Text size="xs" c="dimmed">
-            Upload file rubric untuk evaluasi
+            Upload rubric file for evaluation
           </Text>
         </div>
 
         <FileInput
           leftSection={<IconFileText size={18} />}
-          placeholder="Pilih file rubric"
+          placeholder="Select rubric file"
           accept={FILE_TYPES.RUBRIC.accept}
           onChange={handleFileChange}
           disabled={loading}

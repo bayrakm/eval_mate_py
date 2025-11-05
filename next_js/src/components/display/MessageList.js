@@ -8,7 +8,7 @@ export function MessageList({ messages }) {
     return (
       <Paper p="xl" withBorder radius="md" style={{ textAlign: "center" }}>
         <Text size="sm" c="dimmed">
-          Belum ada pesan. Mulai dengan upload resource atau jalankan evaluasi.
+          No messages yet. Start by uploading resources or running evaluation.
         </Text>
       </Paper>
     );

@@ -43,7 +43,7 @@ export function Sidebar({
           Resources
         </Text>
         <Text size="xs" c="dimmed">
-          Pilih atau upload resource untuk evaluasi
+          Select or upload resources for evaluation
         </Text>
       </div>
 

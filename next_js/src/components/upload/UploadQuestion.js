@@ -26,12 +26,12 @@ export function UploadQuestion({ onUpload, loading, disabled }) {
             Upload Question
           </Text>
           <Text size="xs" c="dimmed">
-            Upload file question/tugas
+            Upload question/assignment file
           </Text>
         </div>
 
         <TextInput
-          placeholder="Judul question (opsional)"
+          placeholder="Question title (optional)"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           disabled={disabled || loading}
@@ -40,7 +40,7 @@ export function UploadQuestion({ onUpload, loading, disabled }) {
 
         <FileInput
           leftSection={<IconFileText size={18} />}
-          placeholder="Pilih file question"
+          placeholder="Select question file"
           accept={FILE_TYPES.QUESTION.accept}
           onChange={handleFileChange}
           disabled={disabled || loading}

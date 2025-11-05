@@ -27,14 +27,9 @@ export function QuestionSelector({
       if (Array.isArray(data)) {
         setQuestions(data);
       } else {
-        console.warn("Expected array but got:", typeof data);
         setQuestions([]);
       }
     } catch (error) {
-      // Use console.warn instead of console.error to avoid error overlay in Next.js dev mode
-      if (process.env.NODE_ENV === "development") {
-        console.warn("Failed to load questions:", error);
-      }
       setQuestions([]);
     } finally {
       setLoading(false);
@@ -66,7 +61,7 @@ export function QuestionSelector({
         onSelect(question);
       }
     } catch (error) {
-      console.error("Failed to get question:", error);
+      // Failed to get question
     }
   };
 
@@ -74,7 +69,7 @@ export function QuestionSelector({
     return (
       <Paper p="md" withBorder radius="md" bg="gray.0">
         <Text size="sm" c="dimmed" ta="center">
-          Pilih rubric terlebih dahulu
+          Please select a rubric first
         </Text>
       </Paper>
     );
@@ -95,7 +90,7 @@ export function QuestionSelector({
         }}
       >
         <Text size="sm" fw={600}>
-          Pilih Question
+          Select Question
         </Text>
         <Button
           variant="subtle"
@@ -111,7 +106,7 @@ export function QuestionSelector({
         <Loader size="sm" />
       ) : (
         <Select
-          placeholder="Pilih question..."
+          placeholder="Select question..."
           value={selectedId}
           onChange={handleSelect}
           data={questionOptions}

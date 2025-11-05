@@ -14,7 +14,6 @@ export function ActionButtons({
   const isBuilding = loading === LOADING_STATES.BUILDING;
   const isEvaluating = loading === LOADING_STATES.EVALUATING;
 
-  // Button disabled jika capability false atau jika ada action lain yang sedang loading
   const isBuildFusionDisabled = !canBuildFusion || isBuilding || isEvaluating;
   const isEvaluateDisabled = !canEvaluate || isBuilding || isEvaluating;
 

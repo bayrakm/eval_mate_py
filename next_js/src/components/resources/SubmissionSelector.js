@@ -31,11 +31,9 @@ export function SubmissionSelector({
       if (Array.isArray(data)) {
         setSubmissions(data);
       } else {
-        console.warn("Expected array but got:", typeof data);
         setSubmissions([]);
       }
     } catch (error) {
-      console.warn("Failed to load submissions:", error);
       setSubmissions([]);
     } finally {
       setLoading(false);
@@ -67,7 +65,7 @@ export function SubmissionSelector({
         onSelect(submission);
       }
     } catch (error) {
-      console.warn("Failed to get submission:", error);
+      // Failed to get submission
     }
   };
 
@@ -75,7 +73,7 @@ export function SubmissionSelector({
     return (
       <Paper p="md" withBorder radius="md" bg="gray.0">
         <Text size="sm" c="dimmed" ta="center">
-          Pilih rubric dan question terlebih dahulu
+          Please select a rubric and question first
         </Text>
       </Paper>
     );
@@ -96,7 +94,7 @@ export function SubmissionSelector({
         }}
       >
         <Text size="sm" fw={600}>
-          Pilih Submission
+          Select Submission
         </Text>
         <Button
           variant="subtle"
@@ -112,7 +110,7 @@ export function SubmissionSelector({
         <Loader size="sm" />
       ) : (
         <Select
-          placeholder="Pilih submission..."
+          placeholder="Select submission..."
           value={selectedId}
           onChange={handleSelect}
           data={submissionOptions}

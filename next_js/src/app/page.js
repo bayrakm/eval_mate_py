@@ -29,13 +29,6 @@ export default function HomePage() {
         const response = await api.uploadRubric(file);
         const rubric = await api.getRubric(response.meta.id);
 
-        console.log("🔍 Uploaded Rubric:", {
-          id: rubric.id,
-          hasId: !!rubric.id,
-          type: typeof rubric.id,
-          keys: Object.keys(rubric),
-        });
-
         setState((prev) => ({
           ...prev,
           selectedRubric: rubric,
@@ -93,25 +86,13 @@ export default function HomePage() {
         );
         const question = await api.getQuestion(response.meta.id);
 
-        console.log("🔍 Uploaded Question:", {
-          id: question.id,
-          hasId: !!question.id,
-          keys: Object.keys(question),
-        });
-
-        setState((prev) => {
-          console.log("🔍 Setting question - prev state:", {
-            hasRubric: !!prev.selectedRubric,
-            rubricId: prev.selectedRubric?.id,
-          });
-          return {
-            ...prev,
-            selectedQuestion: question,
-            selectedSubmission: null,
-            fusion: null,
-            result: null,
-          };
-        });
+        setState((prev) => ({
+          ...prev,
+          selectedQuestion: question,
+          selectedSubmission: null,
+          fusion: null,
+          result: null,
+        }));
 
         addMessage(`✅ Question uploaded successfully: ${question.title}`);
         notifications.show({
@@ -159,14 +140,7 @@ export default function HomePage() {
           studentHandle,
           file
         );
-        console.log("Upload response:", response);
         const submission = await api.getSubmission(response.meta.id);
-        console.log("Submission from API:", submission);
-        console.log("Submission ID:", submission?.id);
-        console.log(
-          "Submission keys:",
-          submission ? Object.keys(submission) : "null"
-        );
 
         setState((prev) => ({
           ...prev,
@@ -382,7 +356,7 @@ export default function HomePage() {
     setState,
   ]);
 
-  // Capability checks - langsung hitung, tidak pakai useMemo untuk debugging
+  // Capability checks
   const rubricId = state.selectedRubric?.id;
   const questionId = state.selectedQuestion?.id;
 
@@ -392,28 +366,6 @@ export default function HomePage() {
     rubricId && questionId && state.selectedSubmission?.id
   );
   const canEvaluate = Boolean(state.fusion?.id);
-
-  // Log setiap render
-  console.log("=== RENDER DEBUG ===");
-  console.log("State:", {
-    rubric: state.selectedRubric
-      ? { id: state.selectedRubric.id, type: typeof state.selectedRubric.id }
-      : null,
-    question: state.selectedQuestion
-      ? {
-          id: state.selectedQuestion.id,
-          type: typeof state.selectedQuestion.id,
-        }
-      : null,
-  });
-  console.log("IDs:", { rubricId, questionId });
-  console.log("Capabilities:", {
-    canUploadQuestion,
-    canUploadSubmission,
-    canBuildFusion,
-    canEvaluate,
-  });
-  console.log("===================");
 
   return (
     <AppLayout
@@ -450,39 +402,6 @@ export default function HomePage() {
 
               {/* Upload Sections */}
               <Stack gap="md">
-                {/* Debug Panel */}
-                <Paper p="sm" withBorder bg="yellow.0">
-                  <Text size="xs" fw={700} mb="xs">
-                    🔍 DEBUG INFO:
-                  </Text>
-                  <Text size="xs">
-                    Rubric ID: {state.selectedRubric?.id || "❌ null"}
-                  </Text>
-                  <Text size="xs">
-                    Question ID: {state.selectedQuestion?.id || "❌ null"}
-                  </Text>
-                  <Text size="xs">
-                    Submission ID: {state.selectedSubmission?.id || "❌ null"}
-                  </Text>
-                  <Text
-                    size="xs"
-                    fw={600}
-                    c={canUploadSubmission ? "green" : "red"}
-                  >
-                    Can Upload Submission:{" "}
-                    {canUploadSubmission ? "✅ TRUE" : "❌ FALSE"}
-                  </Text>
-                  <Text size="xs" fw={600} c={canBuildFusion ? "green" : "red"}>
-                    Can Build Fusion: {canBuildFusion ? "✅ TRUE" : "❌ FALSE"}
-                  </Text>
-                  <Text size="xs" fw={600} c={canEvaluate ? "green" : "red"}>
-                    Can Evaluate: {canEvaluate ? "✅ TRUE" : "❌ FALSE"}
-                  </Text>
-                  <Text size="xs">
-                    Loading state: {state.loading || "idle"}
-                  </Text>
-                </Paper>
-
                 <UploadRubric
                   onUpload={handleRubricUpload}
                   loading={state.loading === LOADING_STATES.UPLOADING}
