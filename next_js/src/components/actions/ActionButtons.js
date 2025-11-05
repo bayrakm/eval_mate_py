@@ -18,7 +18,7 @@ export function ActionButtons({
   const isEvaluateDisabled = !canEvaluate || isBuilding || isEvaluating;
 
   return (
-    <Group justify="center" mt="xl" gap="md">
+    <Group justify="center" gap="md">
       <Button
         variant="light"
         leftSection={<IconFileUpload size={18} />}

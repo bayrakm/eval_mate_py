@@ -1,11 +1,20 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
-import { Container, Grid, Stack, Paper, Title, Text } from "@mantine/core";
+import {
+  Container,
+  Grid,
+  Stack,
+  Paper,
+  Title,
+  Text,
+  Divider,
+  Group,
+  Badge,
+} from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useAppState } from "../hooks/useAppState";
 import { AppLayout } from "../components/layout/AppLayout";
-import { Sidebar } from "../components/layout/Sidebar";
 import { UploadRubric } from "../components/upload/UploadRubric";
 import { UploadQuestion } from "../components/upload/UploadQuestion";
 import { UploadSubmission } from "../components/upload/UploadSubmission";
@@ -368,28 +377,11 @@ export default function HomePage() {
   const canEvaluate = Boolean(state.fusion?.id);
 
   return (
-    <AppLayout
-      sidebarContent={
-        <Sidebar
-          selectedRubric={state.selectedRubric}
-          selectedQuestion={state.selectedQuestion}
-          selectedSubmission={state.selectedSubmission}
-          onRubricSelect={handleRubricSelect}
-          onQuestionSelect={handleQuestionSelect}
-          onSubmissionSelect={handleSubmissionSelect}
-          onLoadRubrics={api.listRubrics}
-          onLoadQuestions={api.listQuestions}
-          onLoadSubmissions={api.listSubmissions}
-          onGetRubric={api.getRubric}
-          onGetQuestion={api.getQuestion}
-          onGetSubmission={api.getSubmission}
-        />
-      }
-    >
-      <Container fluid p="md">
+    <AppLayout sidebarContent={null}>
+      <Container size="xl" p="md" style={{ margin: "0 auto" }}>
         <Grid gutter="md">
           {/* Main Content Area */}
-          <Grid.Col span={{ base: 12, md: 8 }}>
+          <Grid.Col span={{ base: 12, lg: 8 }}>
             <Stack gap="md">
               <div>
                 <Title order={2} c="orange.7" mb="xs">
@@ -400,47 +392,81 @@ export default function HomePage() {
                 </Text>
               </div>
 
+              <Divider />
+
               {/* Upload Sections */}
-              <Stack gap="md">
-                <UploadRubric
-                  onUpload={handleRubricUpload}
-                  loading={state.loading === LOADING_STATES.UPLOADING}
-                />
+              <Stack gap="lg">
+                <div>
+                  <Group gap="xs" mb="md">
+                    <Badge size="lg" variant="filled" color="orange">
+                      Step 1
+                    </Badge>
+                    <Text size="sm" fw={600} c="dimmed">
+                      Upload Resources
+                    </Text>
+                  </Group>
+                  <Stack gap="md">
+                    <UploadRubric
+                      onUpload={handleRubricUpload}
+                      loading={state.loading === LOADING_STATES.UPLOADING}
+                      isCompleted={!!state.selectedRubric}
+                    />
 
-                <UploadQuestion
-                  onUpload={handleQuestionUpload}
-                  loading={state.loading === LOADING_STATES.UPLOADING}
-                  disabled={!canUploadQuestion}
-                />
+                    <UploadQuestion
+                      onUpload={handleQuestionUpload}
+                      loading={state.loading === LOADING_STATES.UPLOADING}
+                      disabled={!canUploadQuestion}
+                      isCompleted={!!state.selectedQuestion}
+                    />
 
-                <UploadSubmission
-                  onUpload={handleSubmissionUpload}
-                  loading={state.loading === LOADING_STATES.UPLOADING}
-                  disabled={!canUploadSubmission}
-                />
+                    <UploadSubmission
+                      onUpload={handleSubmissionUpload}
+                      loading={state.loading === LOADING_STATES.UPLOADING}
+                      disabled={!canUploadSubmission}
+                      isCompleted={!!state.selectedSubmission}
+                      completedSubmission={state.selectedSubmission}
+                    />
+                  </Stack>
+                </div>
+
+                <Divider />
+
+                {/* Action Buttons */}
+                <div>
+                  <Group gap="xs" mb="md">
+                    <Badge size="lg" variant="filled" color="orange">
+                      Step 2
+                    </Badge>
+                    <Text size="sm" fw={600} c="dimmed">
+                      Evaluate
+                    </Text>
+                  </Group>
+                  <ActionButtons
+                    onBuildFusion={handleBuildFusion}
+                    onEvaluate={handleEvaluate}
+                    canBuildFusion={canBuildFusion}
+                    canEvaluate={canEvaluate}
+                    loading={state.loading}
+                  />
+                </div>
+
+                <Divider />
+
+                {/* Messages */}
+                <div>
+                  <Group gap="xs" mb="md">
+                    <Text size="sm" fw={600}>
+                      Messages
+                    </Text>
+                  </Group>
+                  <MessageList messages={state.messages} />
+                </div>
               </Stack>
-
-              {/* Action Buttons */}
-              <ActionButtons
-                onBuildFusion={handleBuildFusion}
-                onEvaluate={handleEvaluate}
-                canBuildFusion={canBuildFusion}
-                canEvaluate={canEvaluate}
-                loading={state.loading}
-              />
-
-              {/* Messages */}
-              <div>
-                <Text size="sm" fw={600} mb="sm">
-                  Messages
-                </Text>
-                <MessageList messages={state.messages} />
-              </div>
             </Stack>
           </Grid.Col>
 
           {/* Results Panel */}
-          <Grid.Col span={{ base: 12, md: 4 }}>
+          <Grid.Col span={{ base: 12, lg: 4 }} className="sticky-results-panel">
             <ResultsPanel
               result={state.result}
               selectedRubric={state.selectedRubric}

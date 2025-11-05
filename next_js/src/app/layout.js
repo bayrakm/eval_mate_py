@@ -32,7 +32,7 @@ const theme = createTheme({
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="id">
+    <html lang="en">
       <body>
         <MantineProvider theme={theme}>
           <Notifications position="top-right" />
