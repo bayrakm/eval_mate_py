@@ -12,6 +12,7 @@ import {
 } from "@mantine/core";
 import { IconFileText, IconCheck } from "@tabler/icons-react";
 import { FILE_TYPES } from "../../lib/constants";
+import { ProgressIndicator } from "../display/ProgressIndicator";
 
 export function UploadSubmission({
   onUpload,
@@ -19,6 +20,7 @@ export function UploadSubmission({
   disabled,
   isCompleted = false,
   completedSubmission = null,
+  progress = null,
 }) {
   const [studentHandle, setStudentHandle] = useState("");
   const [file, setFile] = useState(null);
@@ -26,7 +28,6 @@ export function UploadSubmission({
   const textInputDisabled = disabled || loading || isCompleted;
   const fileInputDisabled = disabled || loading || isCompleted;
 
-  // Auto-upload when file and studentHandle are ready
   useEffect(() => {
     if (file && studentHandle.trim() && !isCompleted) {
       onUpload(file, studentHandle.trim());
@@ -96,6 +97,10 @@ export function UploadSubmission({
           value={file}
           size="md"
         />
+
+        {progress && progress.type === "upload" && (
+          <ProgressIndicator progress={progress} />
+        )}
       </Stack>
     </Paper>
   );

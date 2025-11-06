@@ -11,6 +11,7 @@ export function useAppState() {
     result: null,
     messages: [],
     loading: "idle",
+    progress: null,
   });
 
   const addMessage = useCallback((content, type = "assistant") => {
@@ -32,6 +33,14 @@ export function useAppState() {
     setState((prev) => ({ ...prev, loading }));
   }, []);
 
+  const setProgress = useCallback((progress) => {
+    setState((prev) => ({ ...prev, progress }));
+  }, []);
+
+  const clearProgress = useCallback(() => {
+    setState((prev) => ({ ...prev, progress: null }));
+  }, []);
+
   const resetSelections = useCallback(() => {
     setState((prev) => ({
       ...prev,
@@ -47,6 +56,8 @@ export function useAppState() {
     setState,
     addMessage,
     setLoading,
+    setProgress,
+    clearProgress,
     resetSelections,
   };
 }

@@ -3,8 +3,14 @@
 import { Paper, Stack, Text, FileInput, Group, Badge } from "@mantine/core";
 import { IconFileText, IconCheck } from "@tabler/icons-react";
 import { FILE_TYPES } from "../../lib/constants";
+import { ProgressIndicator } from "../display/ProgressIndicator";
 
-export function UploadRubric({ onUpload, loading, isCompleted = false }) {
+export function UploadRubric({
+  onUpload,
+  loading,
+  isCompleted = false,
+  progress = null,
+}) {
   const handleFileChange = (file) => {
     if (file) {
       onUpload(file);
@@ -49,6 +55,10 @@ export function UploadRubric({ onUpload, loading, isCompleted = false }) {
           disabled={loading || isCompleted}
           size="md"
         />
+
+        {progress && progress.type === "upload" && (
+          <ProgressIndicator progress={progress} />
+        )}
       </Stack>
     </Paper>
   );

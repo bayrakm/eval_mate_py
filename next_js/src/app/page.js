@@ -21,21 +21,62 @@ import { UploadSubmission } from "../components/upload/UploadSubmission";
 import { ActionButtons } from "../components/actions/ActionButtons";
 import { MessageList } from "../components/display/MessageList";
 import { ResultsPanel } from "../components/display/ResultsPanel";
+import { ProgressIndicator } from "../components/display/ProgressIndicator";
 import * as api from "../lib/apiClient";
 import { LOADING_STATES } from "../lib/constants";
 
 export default function HomePage() {
-  const { state, setState, addMessage, setLoading, resetSelections } =
-    useAppState();
+  const {
+    state,
+    setState,
+    addMessage,
+    setLoading,
+    setProgress,
+    clearProgress,
+    resetSelections,
+  } = useAppState();
 
-  // Upload handlers
   const handleRubricUpload = useCallback(
     async (file) => {
+      const startTime = Date.now();
+      const minDuration = 800;
+
       try {
         setLoading(LOADING_STATES.UPLOADING);
         addMessage(`Uploading rubric: ${file.name}`, "user");
 
-        const response = await api.uploadRubric(file);
+        setProgress({
+          type: "upload",
+          value: 0,
+          label: `Uploading ${file.name}...`,
+          target: "rubric",
+        });
+
+        const response = await api.uploadRubric(file, {}, (progress) => {
+          setProgress({
+            type: "upload",
+            value: Math.min(progress, 95),
+            label: `Uploading ${file.name}...`,
+            target: "rubric",
+          });
+        });
+
+        const elapsed = Date.now() - startTime;
+        if (elapsed < minDuration) {
+          await new Promise((resolve) =>
+            setTimeout(resolve, minDuration - elapsed)
+          );
+        }
+
+        setProgress({
+          type: "upload",
+          value: 100,
+          label: `Upload complete!`,
+          target: "rubric",
+        });
+
+        await new Promise((resolve) => setTimeout(resolve, 300));
+
         const rubric = await api.getRubric(response.meta.id);
 
         setState((prev) => ({
@@ -47,6 +88,7 @@ export default function HomePage() {
           result: null,
         }));
 
+        clearProgress();
         addMessage(
           `✅ Rubric uploaded successfully: ${rubric.assignment} (${
             rubric.items?.length || 0
@@ -58,6 +100,7 @@ export default function HomePage() {
           color: "green",
         });
       } catch (error) {
+        clearProgress();
         const message = error.message || "Failed to upload rubric";
         addMessage(`❌ ${message}`);
         notifications.show({
@@ -69,7 +112,7 @@ export default function HomePage() {
         setLoading(LOADING_STATES.IDLE);
       }
     },
-    [addMessage, setLoading, setState]
+    [addMessage, setLoading, setState, setProgress, clearProgress]
   );
 
   const handleQuestionUpload = useCallback(
@@ -84,15 +127,50 @@ export default function HomePage() {
         return;
       }
 
+      const startTime = Date.now();
+      const minDuration = 800;
+
       try {
         setLoading(LOADING_STATES.UPLOADING);
         addMessage(`Uploading question: ${file.name}`, "user");
 
+        setProgress({
+          type: "upload",
+          value: 0,
+          label: `Uploading ${file.name}...`,
+          target: "question",
+        });
+
         const response = await api.uploadQuestion(
           state.selectedRubric.id,
           file,
-          title
+          title,
+          (progress) => {
+            setProgress({
+              type: "upload",
+              value: Math.min(progress, 95),
+              label: `Uploading ${file.name}...`,
+              target: "question",
+            });
+          }
         );
+
+        const elapsed = Date.now() - startTime;
+        if (elapsed < minDuration) {
+          await new Promise((resolve) =>
+            setTimeout(resolve, minDuration - elapsed)
+          );
+        }
+
+        setProgress({
+          type: "upload",
+          value: 100,
+          label: `Upload complete!`,
+          target: "question",
+        });
+
+        await new Promise((resolve) => setTimeout(resolve, 300));
+
         const question = await api.getQuestion(response.meta.id);
 
         setState((prev) => ({
@@ -103,6 +181,7 @@ export default function HomePage() {
           result: null,
         }));
 
+        clearProgress();
         addMessage(`✅ Question uploaded successfully: ${question.title}`);
         notifications.show({
           title: "Success",
@@ -110,6 +189,7 @@ export default function HomePage() {
           color: "green",
         });
       } catch (error) {
+        clearProgress();
         const message = error.message || "Failed to upload question";
         addMessage(`❌ ${message}`);
         notifications.show({
@@ -121,7 +201,14 @@ export default function HomePage() {
         setLoading(LOADING_STATES.IDLE);
       }
     },
-    [state.selectedRubric, addMessage, setLoading, setState]
+    [
+      state.selectedRubric,
+      addMessage,
+      setLoading,
+      setState,
+      setProgress,
+      clearProgress,
+    ]
   );
 
   const handleSubmissionUpload = useCallback(
@@ -136,6 +223,9 @@ export default function HomePage() {
         return;
       }
 
+      const startTime = Date.now();
+      const minDuration = 800;
+
       try {
         setLoading(LOADING_STATES.UPLOADING);
         addMessage(
@@ -143,12 +233,44 @@ export default function HomePage() {
           "user"
         );
 
+        setProgress({
+          type: "upload",
+          value: 0,
+          label: `Uploading ${file.name}...`,
+          target: "submission",
+        });
+
         const response = await api.uploadSubmission(
           state.selectedRubric.id,
           state.selectedQuestion.id,
           studentHandle,
-          file
+          file,
+          (progress) => {
+            setProgress({
+              type: "upload",
+              value: Math.min(progress, 95),
+              label: `Uploading ${file.name}...`,
+              target: "submission",
+            });
+          }
         );
+
+        const elapsed = Date.now() - startTime;
+        if (elapsed < minDuration) {
+          await new Promise((resolve) =>
+            setTimeout(resolve, minDuration - elapsed)
+          );
+        }
+
+        setProgress({
+          type: "upload",
+          value: 100,
+          label: `Upload complete!`,
+          target: "submission",
+        });
+
+        await new Promise((resolve) => setTimeout(resolve, 300));
+
         const submission = await api.getSubmission(response.meta.id);
 
         setState((prev) => ({
@@ -158,6 +280,7 @@ export default function HomePage() {
           result: null,
         }));
 
+        clearProgress();
         addMessage(
           `✅ Submission uploaded successfully for ${submission.student_handle}`
         );
@@ -167,6 +290,7 @@ export default function HomePage() {
           color: "green",
         });
       } catch (error) {
+        clearProgress();
         const message = error.message || "Failed to upload submission";
         addMessage(`❌ ${message}`);
         notifications.show({
@@ -184,10 +308,11 @@ export default function HomePage() {
       addMessage,
       setLoading,
       setState,
+      setProgress,
+      clearProgress,
     ]
   );
 
-  // Resource selection handlers
   const handleRubricSelect = useCallback(
     (rubric) => {
       setState((prev) => ({
@@ -234,7 +359,6 @@ export default function HomePage() {
     [addMessage, setState]
   );
 
-  // Fusion and evaluation handlers
   const handleBuildFusion = useCallback(async () => {
     if (
       !state.selectedRubric ||
@@ -250,9 +374,26 @@ export default function HomePage() {
       return;
     }
 
+    let progressInterval = null;
     try {
       setLoading(LOADING_STATES.BUILDING);
       addMessage("Building fusion context...", "user");
+
+      let progressValue = 0;
+      setProgress({
+        type: "building",
+        value: 0,
+        label: "Building fusion context...",
+      });
+
+      progressInterval = setInterval(() => {
+        progressValue = Math.min(progressValue + 5, 90);
+        setProgress({
+          type: "building",
+          value: progressValue,
+          label: "Processing documents and building context...",
+        });
+      }, 200);
 
       const fusion = await api.buildFusion(
         state.selectedRubric.id,
@@ -260,12 +401,23 @@ export default function HomePage() {
         state.selectedSubmission.id
       );
 
+      if (progressInterval) {
+        clearInterval(progressInterval);
+      }
+
+      setProgress({
+        type: "building",
+        value: 100,
+        label: "Fusion context built successfully!",
+      });
+
       setState((prev) => ({
         ...prev,
         fusion,
         result: null,
       }));
 
+      setTimeout(() => clearProgress(), 500);
       addMessage(
         `✅ Fusion context built successfully! Token estimate: ${fusion.token_estimate}, Visual count: ${fusion.visual_count}`
       );
@@ -275,6 +427,10 @@ export default function HomePage() {
         color: "green",
       });
     } catch (error) {
+      if (progressInterval) {
+        clearInterval(progressInterval);
+      }
+      clearProgress();
       const message = error.message || "Failed to build fusion context";
       addMessage(`❌ ${message}`);
       notifications.show({
@@ -292,6 +448,8 @@ export default function HomePage() {
     addMessage,
     setLoading,
     setState,
+    setProgress,
+    clearProgress,
   ]);
 
   const handleEvaluate = useCallback(async () => {
@@ -319,9 +477,26 @@ export default function HomePage() {
       return;
     }
 
+    let progressInterval = null;
     try {
       setLoading(LOADING_STATES.EVALUATING);
       addMessage("Running LLM evaluation...", "user");
+
+      let progressValue = 0;
+      setProgress({
+        type: "evaluating",
+        value: 0,
+        label: "Running LLM evaluation...",
+      });
+
+      progressInterval = setInterval(() => {
+        progressValue = Math.min(progressValue + 3, 90);
+        setProgress({
+          type: "evaluating",
+          value: progressValue,
+          label: "Analyzing submission and generating feedback...",
+        });
+      }, 300);
 
       const result = await api.evaluate(
         state.selectedRubric.id,
@@ -329,11 +504,22 @@ export default function HomePage() {
         state.selectedSubmission.id
       );
 
+      if (progressInterval) {
+        clearInterval(progressInterval);
+      }
+
+      setProgress({
+        type: "evaluating",
+        value: 100,
+        label: "Evaluation complete!",
+      });
+
       setState((prev) => ({
         ...prev,
         result,
       }));
 
+      setTimeout(() => clearProgress(), 500);
       addMessage(
         `✅ Evaluation complete! Total score: ${result.total.toFixed(1)}/100 (${
           result.items?.length || 0
@@ -345,6 +531,10 @@ export default function HomePage() {
         color: "green",
       });
     } catch (error) {
+      if (progressInterval) {
+        clearInterval(progressInterval);
+      }
+      clearProgress();
       const message = error.message || "Failed to run evaluation";
       addMessage(`❌ ${message}`);
       notifications.show({
@@ -363,9 +553,10 @@ export default function HomePage() {
     addMessage,
     setLoading,
     setState,
+    setProgress,
+    clearProgress,
   ]);
 
-  // Capability checks
   const rubricId = state.selectedRubric?.id;
   const questionId = state.selectedQuestion?.id;
 
@@ -380,7 +571,6 @@ export default function HomePage() {
     <AppLayout sidebarContent={null}>
       <Container size="xl" p="md" style={{ margin: "0 auto" }}>
         <Grid gutter="md">
-          {/* Main Content Area */}
           <Grid.Col span={{ base: 12, lg: 8 }}>
             <Stack gap="md">
               <div>
@@ -394,7 +584,6 @@ export default function HomePage() {
 
               <Divider />
 
-              {/* Upload Sections */}
               <Stack gap="lg">
                 <div>
                   <Group gap="xs" mb="md">
@@ -410,6 +599,13 @@ export default function HomePage() {
                       onUpload={handleRubricUpload}
                       loading={state.loading === LOADING_STATES.UPLOADING}
                       isCompleted={!!state.selectedRubric}
+                      progress={
+                        state.progress?.type === "upload" &&
+                        state.progress?.target === "rubric" &&
+                        state.loading === LOADING_STATES.UPLOADING
+                          ? state.progress
+                          : null
+                      }
                     />
 
                     <UploadQuestion
@@ -417,6 +613,13 @@ export default function HomePage() {
                       loading={state.loading === LOADING_STATES.UPLOADING}
                       disabled={!canUploadQuestion}
                       isCompleted={!!state.selectedQuestion}
+                      progress={
+                        state.progress?.type === "upload" &&
+                        state.progress?.target === "question" &&
+                        state.loading === LOADING_STATES.UPLOADING
+                          ? state.progress
+                          : null
+                      }
                     />
 
                     <UploadSubmission
@@ -425,13 +628,19 @@ export default function HomePage() {
                       disabled={!canUploadSubmission}
                       isCompleted={!!state.selectedSubmission}
                       completedSubmission={state.selectedSubmission}
+                      progress={
+                        state.progress?.type === "upload" &&
+                        state.progress?.target === "submission" &&
+                        state.loading === LOADING_STATES.UPLOADING
+                          ? state.progress
+                          : null
+                      }
                     />
                   </Stack>
                 </div>
 
                 <Divider />
 
-                {/* Action Buttons */}
                 <div>
                   <Group gap="xs" mb="md">
                     <Badge size="lg" variant="filled" color="orange">
@@ -441,18 +650,23 @@ export default function HomePage() {
                       Evaluate
                     </Text>
                   </Group>
-                  <ActionButtons
-                    onBuildFusion={handleBuildFusion}
-                    onEvaluate={handleEvaluate}
-                    canBuildFusion={canBuildFusion}
-                    canEvaluate={canEvaluate}
-                    loading={state.loading}
-                  />
+                  <Stack gap="md">
+                    <ActionButtons
+                      onBuildFusion={handleBuildFusion}
+                      onEvaluate={handleEvaluate}
+                      canBuildFusion={canBuildFusion}
+                      canEvaluate={canEvaluate}
+                      loading={state.loading}
+                    />
+                    {(state.progress?.type === "building" ||
+                      state.progress?.type === "evaluating") && (
+                      <ProgressIndicator progress={state.progress} />
+                    )}
+                  </Stack>
                 </div>
 
                 <Divider />
 
-                {/* Messages */}
                 <div>
                   <Group gap="xs" mb="md">
                     <Text size="sm" fw={600}>
@@ -465,7 +679,6 @@ export default function HomePage() {
             </Stack>
           </Grid.Col>
 
-          {/* Results Panel */}
           <Grid.Col span={{ base: 12, lg: 4 }} className="sticky-results-panel">
             <ResultsPanel
               result={state.result}

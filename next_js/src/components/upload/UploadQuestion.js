@@ -12,12 +12,14 @@ import {
 } from "@mantine/core";
 import { IconFileText, IconCheck } from "@tabler/icons-react";
 import { FILE_TYPES } from "../../lib/constants";
+import { ProgressIndicator } from "../display/ProgressIndicator";
 
 export function UploadQuestion({
   onUpload,
   loading,
   disabled,
   isCompleted = false,
+  progress = null,
 }) {
   const [title, setTitle] = useState("");
   const [file, setFile] = useState(null);
@@ -78,6 +80,10 @@ export function UploadQuestion({
           value={file}
           size="md"
         />
+
+        {progress && progress.type === "upload" && (
+          <ProgressIndicator progress={progress} />
+        )}
       </Stack>
     </Paper>
   );
