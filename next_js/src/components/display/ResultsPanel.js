@@ -49,26 +49,15 @@ export function ResultsPanel({ result, selectedRubric }) {
           </Title>
         </div>
 
-        <Divider />
-
-        {result.overall_feedback && (
-          <Stack gap="xs">
-            <Text size="sm" fw={600}>
-              Overall Feedback
-            </Text>
-            <Text size="sm" c="dimmed" style={{ whiteSpace: "pre-wrap" }}>
-              {result.overall_feedback}
-            </Text>
-          </Stack>
-        )}
-
         {result.items && result.items.length > 0 && (
           <>
             <Divider />
             <Stack gap="md">
-              <Text size="sm" fw={600}>
-                Item Scores ({result.items.length})
-              </Text>
+              {result.items.length > 1 && (
+                <Text size="sm" fw={600}>
+                  Item Scores ({result.items.length})
+                </Text>
+              )}
               {result.items.map((item, idx) => {
                 const rubricItem = selectedRubric?.items?.find(
                   (ri) => ri.id === item.rubric_item_id

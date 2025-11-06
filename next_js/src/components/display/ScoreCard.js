@@ -1,6 +1,14 @@
 "use client";
 
-import { Paper, Stack, Text, Progress, Divider } from "@mantine/core";
+import {
+  Paper,
+  Stack,
+  Text,
+  Progress,
+  Divider,
+  Badge,
+  Accordion,
+} from "@mantine/core";
 import { formatScore } from "../../lib/utils";
 
 export function ScoreCard({ item, rubricItem }) {
@@ -8,66 +16,162 @@ export function ScoreCard({ item, rubricItem }) {
   const maxScore = 100;
   const percentage = (score / maxScore) * 100;
 
+  const hasComprehensiveFeedback =
+    item.evidence ||
+    item.evaluation ||
+    item.completeness_percentage !== undefined ||
+    item.strengths ||
+    item.gaps ||
+    item.guidance ||
+    item.significance;
+
   return (
-    <Paper p="md" withBorder radius="md" shadow="sm">
-      <Stack gap="sm">
+    <Stack gap="sm">
+      {item.justification && !hasComprehensiveFeedback && (
         <div>
-          <Text size="sm" fw={600} c="orange.7">
-            {rubricItem?.title || "Rubric Item"}
+          <Text size="xs" fw={600} c="dimmed" mb="xs">
+            Justification:
           </Text>
-          {rubricItem?.description && (
-            <Text size="xs" c="dimmed">
-              {rubricItem.description}
-            </Text>
-          )}
+          <Text size="xs" c="gray.7" style={{ whiteSpace: "pre-wrap" }}>
+            {item.justification}
+          </Text>
         </div>
+      )}
 
-        <Divider />
+      {hasComprehensiveFeedback && (
+        <Accordion variant="separated" radius="md" defaultValue="feedback">
+          <Accordion.Item value="feedback">
+            <Accordion.Control>
+              <Text size="sm" fw={600}>
+                📋 Detailed Feedback
+              </Text>
+            </Accordion.Control>
+            <Accordion.Panel>
+              <Stack gap="xs" mt="xs">
+                {item.evidence && item.evidence.trim() && (
+                  <Paper
+                    p="sm"
+                    withBorder
+                    radius="sm"
+                    style={{ backgroundColor: "#f0f9ff" }}
+                  >
+                    <Text size="xs" fw={600} c="blue.7" mb={4}>
+                      📎 Evidence:
+                    </Text>
+                    <Text
+                      size="xs"
+                      c="gray.8"
+                      style={{ whiteSpace: "pre-wrap" }}
+                    >
+                      {item.evidence}
+                    </Text>
+                  </Paper>
+                )}
 
-        <div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              marginBottom: "8px",
-            }}
-          >
-            <Text size="lg" fw={700} c="orange.7">
-              {formatScore(score)}
-            </Text>
-            <Text size="sm" c="dimmed">
-              / {maxScore}
-            </Text>
-          </div>
+                {item.evaluation && item.evaluation.trim() && (
+                  <Paper
+                    p="sm"
+                    withBorder
+                    radius="sm"
+                    style={{ backgroundColor: "#fef3f2" }}
+                  >
+                    <Text size="xs" fw={600} c="blue.7" mb={4}>
+                      🔍 Evaluation:
+                    </Text>
+                    <Text
+                      size="xs"
+                      c="gray.8"
+                      style={{ whiteSpace: "pre-wrap" }}
+                    >
+                      {item.evaluation}
+                    </Text>
+                  </Paper>
+                )}
 
-          <Progress
-            value={percentage}
-            color="orange"
-            size="lg"
-            radius="md"
-            animated
-          />
-        </div>
+                {item.strengths && item.strengths.trim() && (
+                  <Paper
+                    p="sm"
+                    withBorder
+                    radius="sm"
+                    style={{ backgroundColor: "#f0fdf4" }}
+                  >
+                    <Text size="xs" fw={600} c="green.7" mb={4}>
+                      ✅ Strengths:
+                    </Text>
+                    <Text
+                      size="xs"
+                      c="gray.8"
+                      style={{ whiteSpace: "pre-wrap" }}
+                    >
+                      {item.strengths}
+                    </Text>
+                  </Paper>
+                )}
 
-        {item.justification && (
-          <div>
-            <Text size="xs" fw={600} c="dimmed" mb="xs">
-              Justification:
-            </Text>
-            <Text size="xs" c="gray.7">
-              {item.justification}
-            </Text>
-          </div>
-        )}
+                {item.gaps && item.gaps.trim() && (
+                  <Paper
+                    p="sm"
+                    withBorder
+                    radius="sm"
+                    style={{ backgroundColor: "#fff7ed" }}
+                  >
+                    <Text size="xs" fw={600} c="red.7" mb={4}>
+                      ⚠️ Gaps & Weaknesses:
+                    </Text>
+                    <Text
+                      size="xs"
+                      c="gray.8"
+                      style={{ whiteSpace: "pre-wrap" }}
+                    >
+                      {item.gaps}
+                    </Text>
+                  </Paper>
+                )}
 
-        {item.evidence_block_ids && item.evidence_block_ids.length > 0 && (
-          <div>
-            <Text size="xs" fw={600} c="dimmed">
-              Evidence: {item.evidence_block_ids.length} block(s)
-            </Text>
-          </div>
-        )}
-      </Stack>
-    </Paper>
+                {item.guidance && item.guidance.trim() && (
+                  <Paper
+                    p="sm"
+                    withBorder
+                    radius="sm"
+                    style={{ backgroundColor: "#fefce8" }}
+                  >
+                    <Text size="xs" fw={600} c="orange.7" mb={4}>
+                      💡 Guidance for Improvement:
+                    </Text>
+                    <Text
+                      size="xs"
+                      c="gray.8"
+                      style={{ whiteSpace: "pre-wrap" }}
+                    >
+                      {item.guidance}
+                    </Text>
+                  </Paper>
+                )}
+
+                {item.significance && item.significance.trim() && (
+                  <Paper
+                    p="sm"
+                    withBorder
+                    radius="sm"
+                    style={{ backgroundColor: "#faf5ff" }}
+                  >
+                    <Text size="xs" fw={600} c="violet.7" mb={4}>
+                      🎯 Significance:
+                    </Text>
+                    <Text
+                      size="xs"
+                      c="gray.8"
+                      style={{ whiteSpace: "pre-wrap" }}
+                    >
+                      {item.significance}
+                    </Text>
+                  </Paper>
+                )}
+              </Stack>
+            </Accordion.Panel>
+          </Accordion.Item>
+        </Accordion>
+      )}
+    </Stack>
   );
 }

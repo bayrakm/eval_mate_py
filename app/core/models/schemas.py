@@ -333,16 +333,55 @@ class Submission(BaseModel):
 
 class ScoreItem(BaseModel):
     """
-    Represents a score for a single rubric criterion.
+    Represents a score for a single rubric criterion with comprehensive  feedback.
     
-    Contains the score, justification, and references to evidence
+    Contains the score, comprehensive feedback, and references to evidence
     blocks within the submission document.
     """
     model_config = ConfigDict(strict=True, frozen=True, extra="forbid")
     
     rubric_item_id: str = Field(description="Associated rubric item identifier")
     score: float = Field(ge=0.0, le=100.0, description="Score for this criterion (0-100)")
-    justification: str = Field(description="Explanation for the score")
+    
+    # Legacy field - kept for backward compatibility
+    justification: Optional[str] = Field(
+        default=None, 
+        description="Legacy justification field (deprecated, use comprehensive feedback fields instead)"
+    )
+    
+    # 7-dimensional comprehensive feedback
+    # Using empty string as default instead of None to ensure fields are always present in JSON
+    evidence: str = Field(
+        default="",
+        description="Quoted or paraphrased text from student relevant to this criterion"
+    )
+    evaluation: str = Field(
+        default="",
+        description="Critical analysis of accuracy, depth, and completeness"
+    )
+    completeness_percentage: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=100.0,
+        description="Estimated completeness percentage (0-100%)"
+    )
+    strengths: str = Field(
+        default="",
+        description="What the student did well in this criterion"
+    )
+    gaps: str = Field(
+        default="",
+        description="What is missing, unclear, oversimplified, or incorrect"
+    )
+    guidance: str = Field(
+        default="",
+        description="Actionable expert-level advice for improvement"
+    )
+    significance: str = Field(
+        default="",
+        description="Why the missing elements matter for learning outcomes"
+    )
+    
     evidence_block_ids: List[str] = Field(description="Block IDs supporting this score")
     
     @field_validator("rubric_item_id")
@@ -354,10 +393,10 @@ class ScoreItem(BaseModel):
     
     @field_validator("justification")
     @classmethod
-    def validate_justification(cls, v: str) -> str:
-        if not v.strip():
-            raise ValueError("Justification cannot be empty")
-        return v.strip()
+    def validate_justification(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and not v.strip():
+            return None
+        return v.strip() if v else None
     
     @field_validator("evidence_block_ids")
     @classmethod
@@ -366,6 +405,18 @@ class ScoreItem(BaseModel):
             if not is_valid_id(block_id):
                 raise ValueError(f"Invalid evidence block ID format: {block_id}")
         return v
+    
+    def has_comprehensive_feedback(self) -> bool:
+        """Check if comprehensive 7-dimensional feedback is available."""
+        return any([
+            self.evidence.strip() if self.evidence else False,
+            self.evaluation.strip() if self.evaluation else False,
+            self.completeness_percentage is not None and self.completeness_percentage > 0,
+            self.strengths.strip() if self.strengths else False,
+            self.gaps.strip() if self.gaps else False,
+            self.guidance.strip() if self.guidance else False,
+            self.significance.strip() if self.significance else False
+        ])
 
 
 class EvalResult(BaseModel):
