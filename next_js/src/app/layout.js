@@ -2,6 +2,7 @@
 
 import { MantineProvider, createTheme } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
+import { SessionProvider } from "next-auth/react";
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
 import "./globals.css";
@@ -35,8 +36,10 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         <MantineProvider theme={theme}>
-          <Notifications position="top-right" />
-          {children}
+          <SessionProvider>
+            <Notifications position="top-right" />
+            {children}
+          </SessionProvider>
         </MantineProvider>
       </body>
     </html>

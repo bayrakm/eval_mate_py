@@ -11,6 +11,7 @@ import {
   Divider,
   Group,
   Badge,
+  Button,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useAppState } from "../hooks/useAppState";
@@ -22,8 +23,11 @@ import { ActionButtons } from "../components/actions/ActionButtons";
 import { MessageList } from "../components/display/MessageList";
 import { ResultsPanel } from "../components/display/ResultsPanel";
 import { ProgressIndicator } from "../components/display/ProgressIndicator";
+import { ProtectedRoute } from "../components/auth/ProtectedRoute";
 import * as api from "../lib/apiClient";
 import { LOADING_STATES } from "../lib/constants";
+import { signOut, useSession } from "next-auth/react";
+import { IconLogout } from "@tabler/icons-react";
 
 export default function HomePage() {
   const {
@@ -35,6 +39,8 @@ export default function HomePage() {
     clearProgress,
     resetSelections,
   } = useAppState();
+
+  const { data: session } = useSession();
 
   const handleRubricUpload = useCallback(
     async (file) => {
@@ -568,125 +574,146 @@ export default function HomePage() {
   const canEvaluate = Boolean(state.fusion?.id);
 
   return (
-    <AppLayout sidebarContent={null}>
-      <Container size="xl" p="md" style={{ margin: "0 auto" }}>
-        <Grid gutter="md">
-          <Grid.Col span={{ base: 12, lg: 8 }}>
-            <Stack gap="md">
-              <div>
-                <Title order={2} c="orange.7" mb="xs">
-                  EvalMate
-                </Title>
-                <Text size="sm" c="dimmed">
-                  Intelligent Student Assignment Feedback System
-                </Text>
-              </div>
-
-              <Divider />
-
-              <Stack gap="lg">
-                <div>
-                  <Group gap="xs" mb="md">
-                    <Badge size="lg" variant="filled" color="orange">
-                      Step 1
-                    </Badge>
-                    <Text size="sm" fw={600} c="dimmed">
-                      Upload Resources
+    <ProtectedRoute>
+      <AppLayout sidebarContent={null}>
+        <Container size="xl" p="md" style={{ margin: "0 auto" }}>
+          <Grid gutter="md">
+            <Grid.Col span={{ base: 12, lg: 8 }}>
+              <Stack gap="md">
+                <Group justify="space-between" align="flex-start">
+                  <div>
+                    <Title order={2} c="orange.7" mb="xs">
+                      EvalMate
+                    </Title>
+                    <Text size="sm" c="dimmed">
+                      Intelligent Student Assignment Feedback System
                     </Text>
-                  </Group>
-                  <Stack gap="md">
-                    <UploadRubric
-                      onUpload={handleRubricUpload}
-                      loading={state.loading === LOADING_STATES.UPLOADING}
-                      isCompleted={!!state.selectedRubric}
-                      progress={
-                        state.progress?.type === "upload" &&
-                        state.progress?.target === "rubric" &&
-                        state.loading === LOADING_STATES.UPLOADING
-                          ? state.progress
-                          : null
-                      }
-                    />
-
-                    <UploadQuestion
-                      onUpload={handleQuestionUpload}
-                      loading={state.loading === LOADING_STATES.UPLOADING}
-                      disabled={!canUploadQuestion}
-                      isCompleted={!!state.selectedQuestion}
-                      progress={
-                        state.progress?.type === "upload" &&
-                        state.progress?.target === "question" &&
-                        state.loading === LOADING_STATES.UPLOADING
-                          ? state.progress
-                          : null
-                      }
-                    />
-
-                    <UploadSubmission
-                      onUpload={handleSubmissionUpload}
-                      loading={state.loading === LOADING_STATES.UPLOADING}
-                      disabled={!canUploadSubmission}
-                      isCompleted={!!state.selectedSubmission}
-                      completedSubmission={state.selectedSubmission}
-                      progress={
-                        state.progress?.type === "upload" &&
-                        state.progress?.target === "submission" &&
-                        state.loading === LOADING_STATES.UPLOADING
-                          ? state.progress
-                          : null
-                      }
-                    />
+                  </div>
+                  <Stack gap={4} align="flex-end">
+                    <Text size="xs" c="dimmed">
+                      {session?.user?.email || "demo@example.com"}
+                    </Text>
+                    <Button
+                      size="xs"
+                      variant="light"
+                      color="orange"
+                      leftSection={<IconLogout size={14} />}
+                      onClick={() => signOut({ callbackUrl: "/login" })}
+                    >
+                      Sign Out
+                    </Button>
                   </Stack>
-                </div>
+                </Group>
 
                 <Divider />
 
-                <div>
-                  <Group gap="xs" mb="md">
-                    <Badge size="lg" variant="filled" color="orange">
-                      Step 2
-                    </Badge>
-                    <Text size="sm" fw={600} c="dimmed">
-                      Evaluate
-                    </Text>
-                  </Group>
-                  <Stack gap="md">
-                    <ActionButtons
-                      onBuildFusion={handleBuildFusion}
-                      onEvaluate={handleEvaluate}
-                      canBuildFusion={canBuildFusion}
-                      canEvaluate={canEvaluate}
-                      loading={state.loading}
-                    />
-                    {(state.progress?.type === "building" ||
-                      state.progress?.type === "evaluating") && (
-                      <ProgressIndicator progress={state.progress} />
-                    )}
-                  </Stack>
-                </div>
+                <Stack gap="lg">
+                  <div>
+                    <Group gap="xs" mb="md">
+                      <Badge size="lg" variant="filled" color="orange">
+                        Step 1
+                      </Badge>
+                      <Text size="sm" fw={600} c="dimmed">
+                        Upload Resources
+                      </Text>
+                    </Group>
+                    <Stack gap="md">
+                      <UploadRubric
+                        onUpload={handleRubricUpload}
+                        loading={state.loading === LOADING_STATES.UPLOADING}
+                        isCompleted={!!state.selectedRubric}
+                        progress={
+                          state.progress?.type === "upload" &&
+                          state.progress?.target === "rubric" &&
+                          state.loading === LOADING_STATES.UPLOADING
+                            ? state.progress
+                            : null
+                        }
+                      />
 
-                <Divider />
+                      <UploadQuestion
+                        onUpload={handleQuestionUpload}
+                        loading={state.loading === LOADING_STATES.UPLOADING}
+                        disabled={!canUploadQuestion}
+                        isCompleted={!!state.selectedQuestion}
+                        progress={
+                          state.progress?.type === "upload" &&
+                          state.progress?.target === "question" &&
+                          state.loading === LOADING_STATES.UPLOADING
+                            ? state.progress
+                            : null
+                        }
+                      />
 
-                <div>
-                  <Group gap="xs" mb="md">
-                    <Text size="sm" fw={600}>
-                      Messages
-                    </Text>
-                  </Group>
-                  <MessageList messages={state.messages} />
-                </div>
+                      <UploadSubmission
+                        onUpload={handleSubmissionUpload}
+                        loading={state.loading === LOADING_STATES.UPLOADING}
+                        disabled={!canUploadSubmission}
+                        isCompleted={!!state.selectedSubmission}
+                        completedSubmission={state.selectedSubmission}
+                        progress={
+                          state.progress?.type === "upload" &&
+                          state.progress?.target === "submission" &&
+                          state.loading === LOADING_STATES.UPLOADING
+                            ? state.progress
+                            : null
+                        }
+                      />
+                    </Stack>
+                  </div>
+
+                  <Divider />
+
+                  <div>
+                    <Group gap="xs" mb="md">
+                      <Badge size="lg" variant="filled" color="orange">
+                        Step 2
+                      </Badge>
+                      <Text size="sm" fw={600} c="dimmed">
+                        Evaluate
+                      </Text>
+                    </Group>
+                    <Stack gap="md">
+                      <ActionButtons
+                        onBuildFusion={handleBuildFusion}
+                        onEvaluate={handleEvaluate}
+                        canBuildFusion={canBuildFusion}
+                        canEvaluate={canEvaluate}
+                        loading={state.loading}
+                      />
+                      {(state.progress?.type === "building" ||
+                        state.progress?.type === "evaluating") && (
+                        <ProgressIndicator progress={state.progress} />
+                      )}
+                    </Stack>
+                  </div>
+
+                  <Divider />
+
+                  <div>
+                    <Group gap="xs" mb="md">
+                      <Text size="sm" fw={600}>
+                        Messages
+                      </Text>
+                    </Group>
+                    <MessageList messages={state.messages} />
+                  </div>
+                </Stack>
               </Stack>
-            </Stack>
-          </Grid.Col>
+            </Grid.Col>
 
-          <Grid.Col span={{ base: 12, lg: 4 }} className="sticky-results-panel">
-            <ResultsPanel
-              result={state.result}
-              selectedRubric={state.selectedRubric}
-            />
-          </Grid.Col>
-        </Grid>
-      </Container>
-    </AppLayout>
+            <Grid.Col
+              span={{ base: 12, lg: 4 }}
+              className="sticky-results-panel"
+            >
+              <ResultsPanel
+                result={state.result}
+                selectedRubric={state.selectedRubric}
+              />
+            </Grid.Col>
+          </Grid>
+        </Container>
+      </AppLayout>
+    </ProtectedRoute>
   );
 }
