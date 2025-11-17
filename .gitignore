@@ -13,6 +13,8 @@ eggs/
 .eggs/
 lib/
 lib64/
+!next_js/src/lib/
+!next_js/src/lib/**
 parts/
 sdist/
 var/
