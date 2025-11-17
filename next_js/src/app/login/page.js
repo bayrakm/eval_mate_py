@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { Center, Container, Text } from "@mantine/core";
 import Link from "next/link";
 import { LoginForm } from "../../components/auth/LoginForm";
@@ -9,7 +10,9 @@ export default function LoginPage() {
     <Container size="xs" py="xl" style={{ minHeight: "100vh" }}>
       <Center style={{ minHeight: "80vh" }}>
         <div style={{ width: "100%" }}>
-          <LoginForm />
+          <Suspense fallback={<Text ta="center">Loading form...</Text>}>
+            <LoginForm />
+          </Suspense>
           <Text size="xs" mt="sm" c="dimmed" ta="center">
             Demo hint: email{" "}
             <Text component="span" c="orange.7">
