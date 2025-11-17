@@ -1,4 +1,4 @@
-# EvalMate 🎓
+# EvalMate
 
 **Intelligent Student Assignment Feedback System**
 
