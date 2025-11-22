@@ -85,5 +85,5 @@ jobs:
         with:
           app-name: 'evalmate-api'
           slot-name: 'Production'
-          package: ${{ github.workspace }}/azure_api
+          package: release.zip
           
