@@ -41,6 +41,11 @@ jobs:
           source venv/bin/activate
           pip install -r requirements.txt
 
+      - name: Prepare function package
+        run: |
+          rm -rf ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/app
+          cp -R app ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/app
+
       # Optional: Add step to run tests here
 
       - name: Zip artifact for deployment
