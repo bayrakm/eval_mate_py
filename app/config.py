@@ -4,6 +4,7 @@ Configuration module for EvalMate.
 Provides centralized configuration management and directory setup utilities.
 """
 
+import errno
 import os
 from pathlib import Path
 from typing import Dict, Any
@@ -11,19 +12,45 @@ from typing import Dict, Any
 # Base configuration
 BASE_DIR = Path(__file__).parent
 DEFAULT_DATA_DIR = BASE_DIR / "data"
-# Allow overriding the data directory (needed for read-only environments such as Azure Functions)
-DATA_DIR = Path(os.getenv("DATA_DIR", str(DEFAULT_DATA_DIR)))
+FUNCTIONS_TEMP_DIR = Path("/tmp/evalmate-data")
 
-# Data directories
-DIRECTORIES = {
-    "rubrics": DATA_DIR / "rubrics",
-    "questions": DATA_DIR / "questions", 
-    "submissions": DATA_DIR / "submissions",
-    "evals": DATA_DIR / "evals"
-}
 
-# Database configuration
+def _initial_data_dir() -> Path:
+    """
+    Determine the initial data directory, allowing overrides via DATA_DIR.
+    Falls back to /tmp when running in Azure Functions (read-only filesystem).
+    """
+    configured = os.getenv("DATA_DIR")
+    if configured:
+        return Path(configured)
+    # WEBSITE_INSTANCE_ID is set in Azure Functions
+    if os.getenv("WEBSITE_INSTANCE_ID"):
+        return FUNCTIONS_TEMP_DIR
+    return DEFAULT_DATA_DIR
+
+
+def _build_directories(base: Path) -> Dict[str, Path]:
+    return {
+        "rubrics": base / "rubrics",
+        "questions": base / "questions",
+        "submissions": base / "submissions",
+        "evals": base / "evals",
+    }
+
+
+DATA_DIR = _initial_data_dir()
+DIRECTORIES: Dict[str, Path] = _build_directories(DATA_DIR)
 DATABASE_PATH = DATA_DIR / "db.sqlite3"
+
+
+def _reset_data_dir(new_base: Path) -> None:
+    """
+    Update global path references to a new data directory.
+    """
+    global DATA_DIR, DIRECTORIES, DATABASE_PATH
+    DATA_DIR = new_base
+    DIRECTORIES = _build_directories(DATA_DIR)
+    DATABASE_PATH = DATA_DIR / "db.sqlite3"
 
 # Storage mode: "json" or "sqlite"
 STORAGE_MODE = os.getenv("EVALMATE_STORAGE_MODE", "sqlite")
@@ -46,12 +73,18 @@ def ensure_directories_exist() -> None:
     This function ensures that the base data directory and all subdirectories
     for rubrics, questions, submissions, and evaluations are created.
     """
-    # Create base data directory
-    DATA_DIR.mkdir(exist_ok=True, parents=True)
+    try:
+        DATA_DIR.mkdir(exist_ok=True, parents=True)
+    except OSError as exc:
+        if exc.errno == errno.EROFS and DATA_DIR != FUNCTIONS_TEMP_DIR:
+            _reset_data_dir(FUNCTIONS_TEMP_DIR)
+            DATA_DIR.mkdir(exist_ok=True, parents=True)
+        elif exc.errno != errno.EEXIST:
+            raise
     
     # Create all subdirectories
     for dir_name, dir_path in DIRECTORIES.items():
-        dir_path.mkdir(exist_ok=True)
+        dir_path.mkdir(exist_ok=True, parents=True)
         print(f"✅ Directory '{dir_name}' ready at: {dir_path}")
 
 
