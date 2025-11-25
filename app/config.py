@@ -42,6 +42,7 @@ DATA_DIR = _initial_data_dir()
 DIRECTORIES: Dict[str, Path] = _build_directories(DATA_DIR)
 DATABASE_PATH = DATA_DIR / "db.sqlite3"
 
+print(f"Using data dir: {DATA_DIR}")
 
 def _reset_data_dir(new_base: Path) -> None:
     """
@@ -106,8 +107,5 @@ def get_config() -> Dict[str, Any]:
 
 if __name__ == "__main__":
     # For testing - create directories when run directly
-
-    print(f"Using data dir: {DATA_DIR}")
-
     ensure_directories_exist()
     print("📁 All directories created successfully!")
