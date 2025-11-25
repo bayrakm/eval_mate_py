@@ -10,7 +10,9 @@ from typing import Dict, Any
 
 # Base configuration
 BASE_DIR = Path(__file__).parent
-DATA_DIR = BASE_DIR / "data"
+DEFAULT_DATA_DIR = BASE_DIR / "data"
+# Allow overriding the data directory (needed for read-only environments such as Azure Functions)
+DATA_DIR = Path(os.getenv("DATA_DIR", str(DEFAULT_DATA_DIR)))
 
 # Data directories
 DIRECTORIES = {
@@ -45,7 +47,7 @@ def ensure_directories_exist() -> None:
     for rubrics, questions, submissions, and evaluations are created.
     """
     # Create base data directory
-    DATA_DIR.mkdir(exist_ok=True)
+    DATA_DIR.mkdir(exist_ok=True, parents=True)
     
     # Create all subdirectories
     for dir_name, dir_path in DIRECTORIES.items():
