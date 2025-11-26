@@ -42,7 +42,10 @@ DATA_DIR = _initial_data_dir()
 DIRECTORIES: Dict[str, Path] = _build_directories(DATA_DIR)
 DATABASE_PATH = DATA_DIR / "db.sqlite3"
 
-print(f"Using data dir: {DATA_DIR}")
+
+def _log_data_dir(context: str) -> None:
+    print(f"[config] {context} using data dir: {DATA_DIR}")
+
 
 def _reset_data_dir(new_base: Path) -> None:
     """
@@ -52,6 +55,7 @@ def _reset_data_dir(new_base: Path) -> None:
     DATA_DIR = new_base
     DIRECTORIES = _build_directories(DATA_DIR)
     DATABASE_PATH = DATA_DIR / "db.sqlite3"
+    _log_data_dir("switched")
 
 # Storage mode: "json" or "sqlite"
 STORAGE_MODE = os.getenv("EVALMATE_STORAGE_MODE", "sqlite")
@@ -76,7 +80,9 @@ def ensure_directories_exist() -> None:
     """
     try:
         DATA_DIR.mkdir(exist_ok=True, parents=True)
+        _log_data_dir("initialized")
     except OSError as exc:
+        _log_data_dir(f"mkdir failed ({exc.errno}); attempting fallback if needed")
         if exc.errno == errno.EROFS and DATA_DIR != FUNCTIONS_TEMP_DIR:
             _reset_data_dir(FUNCTIONS_TEMP_DIR)
             DATA_DIR.mkdir(exist_ok=True, parents=True)
