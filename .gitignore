@@ -12,6 +12,11 @@ downloads/
 eggs/
 .eggs/
 lib/
+# Exception: Do NOT ignore frontend lib folder
+!/next_js/
+!/next_js/src/
+!/next_js/src/lib/
+!/next_js/src/lib/**
 lib64/
 parts/
 sdist/

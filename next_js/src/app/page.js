@@ -58,14 +58,7 @@ export default function HomePage() {
           target: "rubric",
         });
 
-        const response = await api.uploadRubric(file, {}, (progress) => {
-          setProgress({
-            type: "upload",
-            value: Math.min(progress, 95),
-            label: `Uploading ${file.name}...`,
-            target: "rubric",
-          });
-        });
+        const response = await api.uploadRubric(file, {});
 
         const elapsed = Date.now() - startTime;
         if (elapsed < minDuration) {
@@ -147,19 +140,10 @@ export default function HomePage() {
           target: "question",
         });
 
-        const response = await api.uploadQuestion(
-          state.selectedRubric.id,
-          file,
-          title,
-          (progress) => {
-            setProgress({
-              type: "upload",
-              value: Math.min(progress, 95),
-              label: `Uploading ${file.name}...`,
-              target: "question",
-            });
-          }
-        );
+        const response = await api.uploadQuestion(file, {
+          rubric_id: state.selectedRubric.id,
+          title: title,
+        });
 
         const elapsed = Date.now() - startTime;
         if (elapsed < minDuration) {
@@ -246,20 +230,11 @@ export default function HomePage() {
           target: "submission",
         });
 
-        const response = await api.uploadSubmission(
-          state.selectedRubric.id,
-          state.selectedQuestion.id,
-          studentHandle,
-          file,
-          (progress) => {
-            setProgress({
-              type: "upload",
-              value: Math.min(progress, 95),
-              label: `Uploading ${file.name}...`,
-              target: "submission",
-            });
-          }
-        );
+        const response = await api.uploadSubmission(file, {
+          rubric_id: state.selectedRubric.id,
+          question_id: state.selectedQuestion.id,
+          student_handle: studentHandle,
+        });
 
         const elapsed = Date.now() - startTime;
         if (elapsed < minDuration) {
@@ -504,11 +479,15 @@ export default function HomePage() {
         });
       }, 300);
 
-      const result = await api.evaluate(
+      const result = (await api.evaluate(
         state.selectedRubric.id,
         state.selectedQuestion.id,
         state.selectedSubmission.id
-      );
+      )) || {
+        total: 0,
+        items: [],
+        overall_feedback: "Evaluation completed",
+      };
 
       if (progressInterval) {
         clearInterval(progressInterval);
