@@ -84,13 +84,18 @@ lerna-debug.log*
 # Ignore entire data directories (runtime data, user-generated content)
 # These folders contain database files, uploads, generated JSONs, and assets
 data/
-app/data/
 
-# Keep only the directory structure (optional - uncomment if you want empty folders tracked)
-# !data/.gitkeep
-# !app/data/.gitkeep
-# !data/*/.gitkeep
-# !app/data/*/.gitkeep
+# Ignore all files in app/data subdirectories except .gitkeep
+!app/data/
+app/data/evals/*
+!app/data/evals/.gitkeep
+app/data/questions/*
+!app/data/questions/.gitkeep
+app/data/rubrics/*
+!app/data/rubrics/.gitkeep
+app/data/submissions/*
+!app/data/submissions/.gitkeep
+app/data/db.sqlite3
 
 # ============================================
 # IDE and Editor Files
