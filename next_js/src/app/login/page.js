@@ -22,8 +22,8 @@ export default function LoginPage() {
             .
           </Text>
           <Text size="xs" mt="xs" ta="center">
-            Don't have an account yet? You can later connect this to the backend
-            through a registration endpoint.
+            Don&apos;t have an account yet? You can later connect this to the
+            backend through a registration endpoint.
           </Text>
           <Text size="xs" mt="xs" ta="center">
             <Link href="/">

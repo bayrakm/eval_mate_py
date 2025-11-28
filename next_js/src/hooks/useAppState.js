@@ -49,7 +49,7 @@ export function useAppState() {
       fusion: null,
       result: null,
     }));
-  });
+  }, []);
 
   return {
     state,

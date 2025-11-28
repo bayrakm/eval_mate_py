@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import {
   Alert,
   Button,
@@ -15,7 +15,7 @@ import { IconAlertCircle } from "@tabler/icons-react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export function LoginForm() {
+function LoginFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
@@ -98,5 +98,13 @@ export function LoginForm() {
         </form>
       </Stack>
     </Paper>
+  );
+}
+
+export function LoginForm() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginFormContent />
+    </Suspense>
   );
 }
