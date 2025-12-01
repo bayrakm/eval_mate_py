@@ -10,70 +10,208 @@ EvalMate is a comprehensive AI-powered assessment platform that automatically ev
 - **🤖 AI-Powered Evaluation**: GPT-4 powered assessment with detailed feedback
 - **📋 Smart Rubric Processing**: Automatic rubric parsing from uploaded documents
 - **🎯 Structured Scoring**: Criterion-based evaluation with evidence citations
-- **🌐 Multiple Interfaces**: Web UI, REST API, and CLI access
+- **🌐 Multiple Interfaces**: 
+  - **Web UI** (Next.js) - Modern React-based interface with Mantine components
+  - **REST API** (FastAPI) - Full-featured backend API with OpenAPI docs
+  - **CLI Tools** - Unified CLI (`evalmate_cli.py`) and specialized modules
 - **💾 Flexible Storage**: SQLite database with optional JSON backup
 - **📊 Rich Export Options**: JSON and CSV result formats
+- **🖼️ Visual Content Support**: Image extraction, OCR, and multimodal processing
 - **🔧 Enterprise Ready**: Robust error handling and scalable architecture
 
 ## 📁 Project Architecture
 
 ```
-evalmate/
-├── 🎯 Frontend (Next.js)
-│   ├── components/           # React components for UI
-│   ├── pages/               # Next.js pages and routing
-│   ├── styles/              # Tailwind CSS styling
-│   └── public/              # Static assets
+44_eval_mate/
+├── 🎯 Frontend (Next.js 15)
+│   └── next_js/
+│       ├── src/
+│       │   ├── app/                    # Next.js App Router
+│       │   │   ├── page.js             # Home page
+│       │   │   ├── layout.js           # Root layout
+│       │   │   ├── globals.css         # Global styles
+│       │   │   ├── login/              # Authentication pages
+│       │   │   └── api/                # API routes
+│       │   │       └── auth/           # NextAuth.js handlers
+│       │   │
+│       │   ├── components/             # React components
+│       │   │   ├── actions/            # Action buttons
+│       │   │   │   └── ActionButtons.js
+│       │   │   ├── auth/               # Authentication
+│       │   │   │   ├── LoginForm.js
+│       │   │   │   └── ProtectedRoute.js
+│       │   │   ├── display/            # Results display
+│       │   │   │   ├── MessageList.js
+│       │   │   │   ├── ProgressIndicator.js
+│       │   │   │   ├── ResultsPanel.js
+│       │   │   │   └── ScoreCard.js
+│       │   │   ├── layout/             # Layout components
+│       │   │   │   ├── AppLayout.js
+│       │   │   │   └── Sidebar.js
+│       │   │   ├── resources/          # Resource selectors
+│       │   │   │   ├── QuestionSelector.js
+│       │   │   │   ├── RubricSelector.js
+│       │   │   │   └── SubmissionSelector.js
+│       │   │   └── upload/             # File upload forms
+│       │   │       ├── UploadQuestion.js
+│       │   │       ├── UploadRubric.js
+│       │   │       └── UploadSubmission.js
+│       │   │
+│       │   ├── hooks/                  # Custom React hooks
+│       │   │   └── useAppState.js
+│       │   │
+│       │   └── lib/                    # Utilities
+│       │       ├── apiClient.js        # Backend API client
+│       │       ├── constants.js        # App constants
+│       │       └── utils.js            # Helper functions
+│       │
+│       ├── package.json                # Frontend dependencies
+│       └── next.config.js              # Next.js configuration
 │
-├── 🔧 Backend (FastAPI)
-│   ├── app/main.py          # FastAPI application entry
-│   ├── app/api/             # REST API endpoints
-│   │   ├── server.py        # API server configuration
-│   │   └── schemas.py       # API request/response models
+├── 🔧 Backend (FastAPI + Python 3.12)
+│   ├── app/
+│   │   ├── main.py                     # Application entry point
+│   │   ├── config.py                   # Configuration management
+│   │   │
+│   │   ├── api/                        # REST API layer
+│   │   │   ├── server.py               # FastAPI server setup
+│   │   │   ├── schemas.py              # API request/response schemas
+│   │   │   ├── evaluate_routes.py      # Evaluation endpoints
+│   │   │   └── fusion_routes.py        # Fusion context endpoints
+│   │   │
+│   │   ├── core/                       # Core business logic
+│   │   │   ├── types.py                # Type definitions
+│   │   │   ├── visual_extraction.py    # Image & table extraction
+│   │   │   │
+│   │   │   ├── io/                     # Document processing
+│   │   │   │   ├── ingest.py           # Multi-format ingestion
+│   │   │   │   ├── rubric_parser.py    # Rubric parsing
+│   │   │   │   ├── captioning.py       # Image captioning
+│   │   │   │   ├── caption_heuristics.py # Caption strategies
+│   │   │   │   ├── ocr.py              # OCR processing
+│   │   │   │   ├── pdf_utils.py        # PDF utilities
+│   │   │   │   ├── docx_utils.py       # DOCX utilities
+│   │   │   │   ├── table_extraction.py # Table extraction
+│   │   │   │   └── text_utils.py       # Text processing
+│   │   │   │
+│   │   │   ├── fusion/                 # Context assembly
+│   │   │   │   ├── builder.py          # FusionContext builder
+│   │   │   │   ├── schema.py           # Fusion schemas
+│   │   │   │   └── utils.py            # Fusion utilities
+│   │   │   │
+│   │   │   ├── llm/                    # AI evaluation engine
+│   │   │   │   ├── evaluator.py        # Main evaluator
+│   │   │   │   ├── prompts.py          # Prompt templates
+│   │   │   │   ├── model_api.py        # OpenAI integration
+│   │   │   │   ├── model_config.py     # Model configuration
+│   │   │   │   ├── json_guard.py       # JSON validation
+│   │   │   │   ├── rate_limit.py       # Rate limiting
+│   │   │   │   ├── chunking.py         # Content chunking
+│   │   │   │   └── multimodal_context.py # Multimodal handling
+│   │   │   │
+│   │   │   ├── models/                 # Data schemas
+│   │   │   │   ├── schemas.py          # Pydantic models
+│   │   │   │   ├── ids.py              # ID generation
+│   │   │   │   └── validators.py       # Custom validators
+│   │   │   │
+│   │   │   └── store/                  # Data persistence
+│   │   │       ├── repo.py             # Repository interface
+│   │   │       ├── sqlite_store.py     # SQLite backend
+│   │   │       ├── json_store.py       # JSON file backend
+│   │   │       └── backend_selector.py # Storage selection
+│   │   │
+│   │   ├── ui/                         # CLI interfaces
+│   │   │   ├── cli.py                  # Main CLI (legacy)
+│   │   │   ├── cli_fusion.py           # Fusion CLI commands
+│   │   │   └── cli_evaluate.py         # Evaluation CLI commands
+│   │   │
+│   │   └── tests/                      # Test suite
 │   │
-│   ├── app/core/            # Core business logic
-│   │   ├── io/              # Document processing & parsing
-│   │   │   ├── ingest.py    # Multi-format document ingestion
-│   │   │   └── rubric_parser.py # Rubric structure extraction
-│   │   │
-│   │   ├── fusion/          # Evaluation context assembly
-│   │   │   ├── builder.py   # Context fusion logic
-│   │   │   └── schema.py    # Fusion data structures
-│   │   │
-│   │   ├── llm/             # AI evaluation engine
-│   │   │   ├── evaluator.py # Main evaluation pipeline
-│   │   │   ├── prompts.py   # LLM prompt engineering
-│   │   │   └── model_api.py # OpenAI API integration
-│   │   │
-│   │   ├── store/           # Data persistence layer
-│   │   │   ├── repo.py      # Repository interface
-│   │   │   └── sqlite_store.py # SQLite implementation
-│   │   │
-│   │   ├── models/          # Data schemas and validation
-│   │   │   └── schemas.py   # Pydantic models
-│   │   │
-│   │   └── visual_extraction.py # Image and table processing
-│   │
-│   └── app/ui/              # Command-line interface
-│       └── cli.py           # Legacy CLI (deprecated)
-│
-├── 📊 CLI Tool
-│   └── evalmate_cli.py      # Unified CLI interface
+│   └── evalmate_cli.py                 # Unified CLI entry point
 │
 ├── 📁 Data Storage
-│   ├── data/rubrics/        # Uploaded rubric documents
-│   ├── data/questions/      # Assignment question files
-│   ├── data/submissions/    # Student submission files
-│   ├── data/results/        # Evaluation results export
-│   └── data/fusion/         # Cached evaluation contexts
+│   ├── app/data/                       # Backend data (managed by config.py)
+│   │   ├── db.sqlite3                  # SQLite database
+│   │   ├── rubrics/                    # Uploaded rubrics
+│   │   ├── questions/                  # Assignment questions
+│   │   ├── submissions/                # Student submissions
+│   │   └── evals/                      # Evaluation results
+│   │
+│   └── data/                           # Root data directory
+│       ├── assets/                     # Extracted visuals/images
+│       ├── fusion/                     # Fusion context cache
+│       ├── uploads/                    # File upload staging
+│       │   ├── rubrics/
+│       │   ├── questions/
+│       │   └── submissions/
+│       ├── rubrics/                    # Additional rubrics
+│       ├── questions/                  # Additional questions
+│       └── submissions/                # Additional submissions
 │
-└── 🧪 Testing & Configuration
-    ├── tests/               # Test suite
-    ├── scripts/             # Utility scripts
-    └── pyproject.toml       # Dependencies and configuration
+└── 🧪 Configuration & Build
+    ├── pyproject.toml                  # Python dependencies
+    ├── uv.lock                         # UV lock file
+    ├── .env.example                    # Environment template
+    ├── .gitignore                      # Git ignore rules
+    └── README.md                       # This file
 ```
 
-## 🛠️ Installation & Setup
+## ⚡ Quick Start
+
+```bash
+# 1. Clone and setup
+git clone <repository-url>
+cd 44_eval_mate
+
+# 2. Install backend dependencies
+python -m venv .venv
+.venv\Scripts\Activate.ps1  # Windows PowerShell
+uv sync
+
+# 3. Configure environment
+cp .env.example .env
+# Edit .env and add your OPENAI_API_KEY
+
+# 4. Run the unified CLI (easiest way to get started)
+uv run python evalmate_cli.py run
+
+# OR start the API server
+uv run uvicorn app.api.server:app --reload
+
+# OR setup frontend (optional)
+cd next_js
+npm install
+npm run dev
+```
+
+## 🔧 Technology Stack
+
+### Backend
+- **Python 3.12+** - Core language
+- **FastAPI** - Modern web framework for APIs
+- **Pydantic** - Data validation and settings management
+- **SQLite** - Database (with optional JSON storage)
+- **OpenAI API** - GPT-4 powered evaluation
+- **UV** - Fast Python package installer
+- **Typer** - CLI interface framework
+
+### Frontend
+- **Next.js 15** - React framework with App Router
+- **React 18** - UI library
+- **Mantine UI** - Component library
+- **NextAuth.js** - Authentication
+- **Axios** - HTTP client
+
+### Document Processing
+- **PDFPlumber** - PDF text extraction
+- **python-docx** - DOCX file handling
+- **Camelot & Tabula** - Table extraction
+- **PyMuPDF (fitz)** - PDF rendering and image extraction
+- **Pillow** - Image processing
+- **pytesseract** - OCR capabilities
+- **OpenCV** - Computer vision operations
+
+## �🛠️ Installation & Setup
 
 ### Prerequisites
 
@@ -85,11 +223,14 @@ evalmate/
 
 ```bash
 git clone <repository-url>
-cd evalmate
+cd 44_eval_mate
 
 # Create and activate virtual environment
 python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+# On Windows PowerShell:
+.venv\Scripts\Activate.ps1
+# On Linux/Mac:
+source .venv/bin/activate
 
 # Install dependencies with uv (recommended)
 pip install uv
@@ -118,10 +259,10 @@ OPENAI_MODEL=gpt-4o
 uv run python app/main.py
 ```
 
-### 4. Setup Frontend (Optional)
+### 3. Setup Frontend (Optional)
 
 ```bash
-cd frontend
+cd next_js
 
 # Install dependencies
 npm install
@@ -149,10 +290,10 @@ uv run uvicorn app.api.server:app --host 0.0.0.0 --port 8000
 
 ```bash
 # Terminal 1: Start backend
-uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
+uv run uvicorn app.api.server:app --host 0.0.0.0 --port 8000
 
 # Terminal 2: Start frontend
-cd frontend
+cd next_js
 npm run start
 ```
 
@@ -166,13 +307,19 @@ uv run python evalmate_cli.py status
 uv run python evalmate_cli.py run
 ```
 
-All data is stored in the `data/` directory:
+All data is stored in two main directories:
 
-- `data/rubrics/` - Grading rubrics
-- `data/questions/` - Assignment questions
-- `data/submissions/` - Student submissions
-- `data/evals/` - Evaluation results
-- `data/db.sqlite3` - SQLite database (when using SQLite mode)
+**Backend Data (`app/data/`):**
+- `app/data/db.sqlite3` - SQLite database (when using SQLite mode)
+- `app/data/rubrics/` - Grading rubrics
+- `app/data/questions/` - Assignment questions
+- `app/data/submissions/` - Student submissions
+- `app/data/evals/` - Evaluation results
+
+**Root Data (`data/`):**
+- `data/assets/` - Extracted images and visual content
+- `data/fusion/` - Cached fusion contexts
+- `data/uploads/` - File upload staging area
 
 ## 🧪 Testing
 
@@ -339,11 +486,18 @@ python -m app.ui.cli submissions get --id submission_789
 export OPENAI_API_KEY=sk-your-key-here
 export OPENAI_MODEL=gpt-4o  # optional override
 
+# Optional: OpenAI Organization ID
+export OPENAI_ORG_ID=org-your-org-id
+
 # Storage backend (default: sqlite)
 export EVALMATE_STORAGE_MODE=sqlite  # or 'json'
 
-# Data directory (default: ./data)
-export EVALMATE_DATA_DIR=/path/to/data
+# Optional: Logging configuration
+export LOG_LEVEL=INFO  # DEBUG, INFO, WARNING, ERROR
+
+# Optional: Data directories (defaults to ./data and ./data/assets)
+export DATA_DIR=data
+export ASSETS_DIR=data/assets
 ```
 
 ### Storage Backends
