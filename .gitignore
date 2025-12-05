@@ -34,6 +34,7 @@ venv/
 ENV/
 env/
 .env.venv
+.env.example
 
 # UV package manager
 uv.lock

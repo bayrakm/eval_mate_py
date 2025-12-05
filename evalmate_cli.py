@@ -540,5 +540,258 @@ def show_status():
         console.print(f"[red]ERROR: Error checking status: {e}[/red]")
 
 
+@app.command("test")
+def test_evaluation(
+    question: str = typer.Option(
+        "data/questions/COS4015-B_Coursework 001.pdf",
+        "--question", "-q",
+        help="Path to question file"
+    ),
+    rubric: str = typer.Option(
+        "data/rubrics/COS4015-B_Coursework 001 - Marking Scheme.pdf",
+        "--rubric", "-r",
+        help="Path to rubric file"
+    ),
+    submission: str = typer.Option(
+        "data/submissions/test1.pdf",
+        "--submission", "-s",
+        help="Path to student submission file"
+    ),
+    output: Optional[str] = typer.Option(
+        None,
+        "--output", "-o",
+        help="Output file path for results (JSON)"
+    )
+):
+    """
+    Test evaluation with direct file paths (bypasses repository).
+    
+    This command allows you to quickly test the evaluation system with specific files
+    without uploading them to the repository first.
+    
+    Example:
+        uv run python evalmate_cli.py test
+        uv run python evalmate_cli.py test -q "path/to/question.pdf" -r "path/to/rubric.pdf" -s "path/to/submission.pdf"
+    """
+    from pathlib import Path
+    from app.core.io.ingest import ingest_any
+    from app.core.io.rubric_parser import parse_rubric_to_items
+    from app.core.models.schemas import Question, Submission, Rubric
+    from app.core.models.ids import new_question_id, new_rubric_id, new_submission_id
+    
+    display_banner()
+    console.print("\n[bold cyan]Test Evaluation Mode[/bold cyan]")
+    console.print("[dim]Evaluating with direct file paths...[/dim]\n")
+    
+    try:
+        # Validate files exist
+        question_path = Path(question)
+        rubric_path = Path(rubric)
+        submission_path = Path(submission)
+        
+        if not question_path.exists():
+            console.print(f"[red]ERROR: Question file not found: {question}[/red]")
+            raise typer.Exit(1)
+        if not rubric_path.exists():
+            console.print(f"[red]ERROR: Rubric file not found: {rubric}[/red]")
+            raise typer.Exit(1)
+        if not submission_path.exists():
+            console.print(f"[red]ERROR: Submission file not found: {submission}[/red]")
+            raise typer.Exit(1)
+        
+        console.print(f"[cyan]Question:[/cyan] {question}")
+        console.print(f"[cyan]Rubric:[/cyan] {rubric}")
+        console.print(f"[cyan]Submission:[/cyan] {submission}\n")
+        
+        # Step 1: Ingest documents
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console
+        ) as progress:
+            task = progress.add_task("Processing question document...", total=None)
+            question_doc = ingest_any(str(question_path))
+            progress.update(task, description="[green]✓[/green] Question processed")
+            progress.stop_task(task)
+            
+            task = progress.add_task("Processing rubric document...", total=None)
+            rubric_doc = ingest_any(str(rubric_path))
+            progress.update(task, description="[green]✓[/green] Rubric processed")
+            progress.stop_task(task)
+            
+            task = progress.add_task("Processing submission document...", total=None)
+            submission_doc = ingest_any(str(submission_path))
+            progress.update(task, description="[green]✓[/green] Submission processed")
+            progress.stop_task(task)
+        
+        console.print()
+        
+        # Step 2: Parse rubric into items
+        console.print("[cyan]Parsing rubric criteria...[/cyan]")
+        rubric_items = parse_rubric_to_items(rubric_doc)
+        console.print(f"[green]✓[/green] Found {len(rubric_items)} rubric criteria\n")
+        
+        # Display rubric items
+        rubric_table = Table(title="Rubric Criteria", box=box.ROUNDED)
+        rubric_table.add_column("#", style="cyan", width=3)
+        rubric_table.add_column("Title", style="yellow")
+        rubric_table.add_column("Weight", style="green", width=10)
+        rubric_table.add_column("Type", style="magenta", width=15)
+        
+        for idx, item in enumerate(rubric_items, 1):
+            title_display = item.title[:50] + "..." if len(item.title) > 50 else item.title
+            rubric_table.add_row(
+                str(idx),
+                title_display,
+                f"{item.weight:.2f}",
+                item.criterion.value
+            )
+        
+        console.print(rubric_table)
+        console.print()
+        
+        # Step 3: Save objects to repository and build fusion context
+        console.print("[cyan]Building evaluation context...[/cyan]")
+        
+        # Create temporary objects for fusion
+        rubric_obj = Rubric(
+            id=new_rubric_id(),
+            course="TEST",
+            assignment="Test Evaluation",
+            version="test",
+            canonical=rubric_doc,
+            items=rubric_items
+        )
+        
+        question_obj = Question(
+            id=new_question_id(),
+            rubric_id=rubric_obj.id,
+            title="Test Question",
+            canonical=question_doc
+        )
+        
+        submission_obj = Submission(
+            id=new_submission_id(),
+            rubric_id=rubric_obj.id,
+            question_id=question_obj.id,
+            student_handle="test_student",
+            canonical=submission_doc
+        )
+        
+        # Temporarily save to repository for fusion context building
+        repo.save_rubric(rubric_obj)
+        repo.save_question(question_obj)
+        repo.save_submission(submission_obj)
+        
+        # Build fusion context using IDs
+        fusion_context = build_fusion_context(
+            rubric_id=rubric_obj.id,
+            question_id=question_obj.id,
+            submission_id=submission_obj.id
+        )
+        console.print(f"[green]✓[/green] Fusion context built\n")
+        
+        # Step 4: Run evaluation
+        console.print("[bold cyan]Running LLM Evaluation...[/bold cyan]")
+        console.print("[dim]This may take a minute depending on the submission length...[/dim]\n")
+        
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console
+        ) as progress:
+            task = progress.add_task("Evaluating submission with GPT-4...", total=None)
+            eval_result = evaluate_submission(
+                rubric_id=rubric_obj.id,
+                question_id=question_obj.id,
+                submission_id=submission_obj.id
+            )
+            progress.update(task, description="[green]✓[/green] Evaluation complete")
+        
+        console.print()
+        
+        # Step 5: Display results
+        console.print("[bold green]Evaluation Results[/bold green]\n")
+        
+        # Summary
+        total_score = sum(item.score for item in eval_result.items)
+        # Rubric items have weights (0.0-1.0), scores are 0-100
+        # For display, we'll show the actual scores
+        max_possible = len(rubric_items) * 100  # Assuming max 100 per criterion
+        percentage = (total_score / max_possible * 100) if max_possible > 0 else 0
+        
+        summary = f"""
+[bold]Total Score:[/bold] {total_score:.1f} / {max_possible} ([bold cyan]{percentage:.1f}%[/bold cyan])
+[bold]Criteria Evaluated:[/bold] {len(eval_result.items)}
+"""
+        console.print(Panel(summary, title="Summary", border_style="green"))
+        console.print()
+        
+        # Detailed feedback
+        for idx, item in enumerate(eval_result.items, 1):
+            # Find matching rubric item
+            rubric_item = next((ri for ri in rubric_items if ri.id == item.rubric_item_id), None)
+            criterion_name = rubric_item.title if rubric_item else f"Criterion {idx}"
+            max_score = 100  # Scores are 0-100 per criterion
+            
+            # Create detailed feedback panel
+            feedback_content = f"""[bold]Score:[/bold] {item.score}/{max_score} ([cyan]{item.completeness_percentage}% complete[/cyan])
+
+[bold yellow]Evidence:[/bold yellow]
+{item.evidence}
+
+[bold yellow]Evaluation:[/bold yellow]
+{item.evaluation}
+
+[bold green]Strengths:[/bold green]
+{item.strengths}
+
+[bold red]Gaps:[/bold red]
+{item.gaps}
+
+[bold blue]Guidance:[/bold blue]
+{item.guidance}
+
+[bold magenta]Significance:[/bold magenta]
+{item.significance}
+"""
+            console.print(Panel(
+                feedback_content,
+                title=f"[bold]{idx}. {criterion_name[:50]}[/bold]",
+                border_style="cyan",
+                padding=(1, 2)
+            ))
+            console.print()
+        
+        # Step 6: Save output if requested
+        if output:
+            output_path = Path(output)
+            output_data = {
+                "evaluation": eval_result.model_dump(),
+                "metadata": {
+                    "question_file": str(question_path),
+                    "rubric_file": str(rubric_path),
+                    "submission_file": str(submission_path),
+                    "evaluated_at": datetime.now().isoformat(),
+                    "total_score": total_score,
+                    "max_possible": max_possible,
+                    "percentage": percentage
+                }
+            }
+            
+            with open(output_path, 'w', encoding='utf-8') as f:
+                json.dump(output_data, f, indent=2, ensure_ascii=False)
+            
+            console.print(f"[green]✓[/green] Results saved to: {output}")
+        
+        console.print("\n[bold green]Test evaluation complete![/bold green]")
+        
+    except Exception as e:
+        console.print(f"\n[bold red]ERROR: {e}[/bold red]")
+        import traceback
+        console.print(f"[dim]{traceback.format_exc()}[/dim]")
+        raise typer.Exit(1)
+
+
 if __name__ == "__main__":
     app()
