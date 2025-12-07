@@ -483,3 +483,127 @@ def evaluate_submission(rubric_id: str, question_id: str, submission_id: str) ->
     logger.info(f"Saved EvalResult for submission {submission_id} with total score {total}")
     
     return result
+
+
+def evaluate_submission_narrative(rubric_id: str, question_id: str, submission_id: str) -> EvalResult:
+    """
+    Build fusion context and run LLM to evaluate using narrative feedback format.
+    Returns EvalResult with comprehensive paragraph-style feedback (no scores).
+    
+    Args:
+        rubric_id: ID of the rubric to evaluate against
+        question_id: ID of the assignment question
+        submission_id: ID of the student submission
+        
+    Returns:
+        EvalResult with narrative_evaluation, narrative_strengths, narrative_gaps, narrative_guidance fields
+    """
+    logger.info(f"Starting narrative evaluation: rubric={rubric_id}, question={question_id}, submission={submission_id}")
+    
+    # Build fusion context (ensures captions exist)
+    ctx = build_fusion_context(rubric_id, question_id, submission_id)
+    
+    # Fetch raw domain objects for validation and metadata
+    rubric = repo.get_rubric(rubric_id)
+    submission = repo.get_submission(submission_id)
+
+    # Validate rubric weights before evaluation
+    validate_weights_sum(rubric)
+
+    model = _pick_model()
+    logger.info(f"Using model: {model} for narrative evaluation")
+    
+    # Prepare all rubric items as JSON for the LLM
+    rubric_json = json.dumps(ctx.rubric_items, indent=2)
+    
+    # Prepare visuals
+    normalized_visuals = _normalize_visuals_for_prompt(
+        [v.model_dump() for v in ctx.submission_visuals],
+        allow_ocr=True
+    )
+    visuals_json = ""
+    if normalized_visuals:
+        visuals_json = f"<SUBMISSION_VISUALS>\n{json.dumps(normalized_visuals, indent=2)}\n</SUBMISSION_VISUALS>"
+    
+    # Get valid block IDs from submission
+    valid_block_ids = {block.id for block in submission.canonical.blocks}
+    
+    # Build messages with narrative schema
+    messages = [
+        {"role": "system", "content": EVAL_SYSTEM_PROMPT},
+        {"role": "user", "content": EVAL_USER_PREFIX.format(
+            rubric_json=rubric_json,
+            question_text=ctx.question_text,
+            submission_text=ctx.submission_text,
+            visuals_json=visuals_json,
+            available_block_ids=""  # Not needed for narrative format
+        )}
+    ]
+    
+    # Call OpenAI API
+    try:
+        logger.info("Calling OpenAI API for narrative evaluation...")
+        response = openai.chat.completions.create(
+            model=model,
+            messages=messages,
+            temperature=0.3,
+            max_tokens=4000,  # Longer for narrative paragraphs
+            response_format={"type": "json_object"}
+        )
+        
+        raw_text = response.choices[0].message.content
+        logger.debug(f"Raw LLM response: {raw_text[:500]}...")
+        
+        # Parse JSON response
+        parsed = json.loads(raw_text)
+        
+        # Extract narrative fields
+        narrative_evaluation = parsed.get("evaluation", "")
+        narrative_strengths = parsed.get("strengths", "")
+        narrative_gaps = parsed.get("gaps", "")
+        narrative_guidance = parsed.get("guidance", "")
+        
+        # Validate we got content
+        if not any([narrative_evaluation, narrative_strengths, narrative_gaps, narrative_guidance]):
+            logger.error("LLM returned empty narrative feedback")
+            raise ValueError("LLM returned no narrative content")
+        
+        logger.info("Successfully parsed narrative feedback from LLM")
+        
+    except Exception as e:
+        logger.error(f"Error calling OpenAI API or parsing response: {e}")
+        # Provide fallback narrative feedback
+        narrative_evaluation = "Evaluation could not be completed due to a technical error. Please review manually."
+        narrative_strengths = "Unable to assess strengths at this time."
+        narrative_gaps = f"Evaluation error: {str(e)}"
+        narrative_guidance = "Please retry the evaluation or contact support for assistance."
+    
+    # Create EvalResult with narrative format (no scores, empty items list)
+    result = EvalResult(
+        submission_id=submission_id,
+        rubric_id=rubric_id,
+        total=0.0,  # No scoring in narrative mode
+        items=[],  # No per-criterion items in narrative mode
+        overall_feedback="",  # Replaced by narrative fields
+        narrative_evaluation=narrative_evaluation,
+        narrative_strengths=narrative_strengths,
+        narrative_gaps=narrative_gaps,
+        narrative_guidance=narrative_guidance,
+        metadata={
+            "model": model,
+            "evaluated_at": datetime.utcnow().isoformat(),
+            "evaluation_mode": "narrative",
+            "token_estimate": str(estimate_tokens(ctx.submission_text + " ".join(v.caption for v in ctx.submission_visuals))),
+            "student": submission.student_handle,
+            "fusion_context_id": ctx.id
+        }
+    )
+
+    # Validate IDs
+    validate_ids(result)
+
+    # Persist the result
+    repo.save_eval_result(result)
+    logger.info(f"Saved narrative EvalResult for submission {submission_id}")
+    
+    return result

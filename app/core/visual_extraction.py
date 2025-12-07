@@ -413,8 +413,8 @@ class VisualExtractor:
     def _extract_text_from_image(self, image_path: str) -> Optional[str]:
         """Extract text from image using OCR."""
         try:
-            from app.core.io.ocr import ocr_image_to_text
-            return ocr_image_to_text(image_path)
+            from app.core.io.ocr import extract_text_with_tesseract
+            return extract_text_with_tesseract(image_path)
         except Exception as e:
             logger.warning(f"OCR failed for image {image_path}: {e}")
             return None
