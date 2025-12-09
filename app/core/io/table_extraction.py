@@ -739,7 +739,7 @@ def create_table_image_representation(table_data: EnhancedTableData) -> Optional
         return buffer.getvalue()
         
     except ImportError:
-        logger.warning("matplotlib not available for table visualization")
+        logger.debug("matplotlib not available for table visualization")
         return None
     except Exception as e:
         logger.error(f"Failed to convert table to image: {e}")

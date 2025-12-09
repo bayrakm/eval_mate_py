@@ -15,7 +15,7 @@ export function MessageList({ messages }) {
   }
 
   return (
-    <ScrollArea h={400} style={{ maxHeight: "60vh" }}>
+    <ScrollArea h={700} style={{ maxHeight: "60vh" }}>
       <Stack gap="xs">
         {messages.map((msg) => (
           <Paper

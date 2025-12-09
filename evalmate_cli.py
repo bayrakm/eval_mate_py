@@ -38,7 +38,7 @@ from rich import box
 
 # EvalMate core imports
 from app.core.fusion.builder import build_fusion_context
-from app.core.llm.evaluator import evaluate_submission
+from app.core.llm.evaluator import evaluate_submission, evaluate_submission_narrative
 from app.core.store import repo
 from app.core.models.schemas import EvalResult
 
@@ -561,6 +561,16 @@ def test_evaluation(
         None,
         "--output", "-o",
         help="Output file path for results (JSON)"
+    ),
+    debug: bool = typer.Option(
+        False,
+        "--debug", "-d",
+        help="Show detailed parsing debug information"
+    ),
+    show_content: bool = typer.Option(
+        False,
+        "--show-content",
+        help="Display full parsed content of all documents"
     )
 ):
     """
@@ -626,8 +636,130 @@ def test_evaluation(
         
         console.print()
         
+        # Show parsed content if requested
+        if show_content:
+            console.print("\n" + "="*80)
+            console.print("[bold yellow]📄 PARSED DOCUMENTS CONTENT[/bold yellow]")
+            console.print("="*80 + "\n")
+            
+            # Question Content
+            console.print(Panel("[bold cyan]QUESTION DOCUMENT[/bold cyan]", border_style="cyan"))
+            console.print(f"[dim]Blocks: {len(question_doc.blocks)} ({sum(1 for b in question_doc.blocks if b.kind=='text')} text, {sum(1 for b in question_doc.blocks if b.kind=='visual')} visual)[/dim]\n")
+            
+            question_text_blocks = [b for b in question_doc.blocks if b.kind == "text"]
+            question_visual_blocks = [b for b in question_doc.blocks if b.kind == "visual"]
+            
+            for idx, block in enumerate(question_text_blocks[:5], 1):  # Show first 5 blocks
+                console.print(f"[cyan]Text Block {idx}:[/cyan]")
+                console.print(f"{block.text[:500]}..." if len(block.text) > 500 else block.text)
+                console.print()
+            
+            if len(question_text_blocks) > 5:
+                console.print(f"[dim]... and {len(question_text_blocks) - 5} more text blocks[/dim]\n")
+            
+            # Show visual blocks
+            if question_visual_blocks:
+                console.print(f"[bold cyan]Visual Content ({len(question_visual_blocks)} visuals):[/bold cyan]")
+                for idx, block in enumerate(question_visual_blocks, 1):
+                    visual = block.visual
+                    console.print(f"\n[cyan]Visual {idx}:[/cyan]")
+                    console.print(f"  [dim]Type:[/dim] {visual.type}")
+                    console.print(f"  [dim]Source:[/dim] {visual.source_path}")
+                    if visual.caption_text:
+                        console.print(f"  [dim]Caption:[/dim] {visual.caption_text[:200]}...")
+                    if visual.ocr_text:
+                        console.print(f"  [dim]OCR Text:[/dim] {visual.ocr_text[:200]}...")
+                    if visual.detected_labels:
+                        console.print(f"  [dim]Labels:[/dim] {', '.join(visual.detected_labels)}")
+                console.print()
+            
+            # Rubric Content
+            console.print(Panel("[bold yellow]RUBRIC DOCUMENT[/bold yellow]", border_style="yellow"))
+            console.print(f"[dim]Blocks: {len(rubric_doc.blocks)} ({sum(1 for b in rubric_doc.blocks if b.kind=='text')} text, {sum(1 for b in rubric_doc.blocks if b.kind=='visual')} visual)[/dim]\n")
+            
+            rubric_text_blocks = [b for b in rubric_doc.blocks if b.kind == "text"]
+            rubric_visual_blocks = [b for b in rubric_doc.blocks if b.kind == "visual"]
+            
+            for idx, block in enumerate(rubric_text_blocks[:10], 1):  # Show first 10 blocks for rubric
+                console.print(f"[yellow]Text Block {idx}:[/yellow]")
+                console.print(f"{block.text[:500]}..." if len(block.text) > 500 else block.text)
+                console.print()
+            
+            if len(rubric_text_blocks) > 10:
+                console.print(f"[dim]... and {len(rubric_text_blocks) - 10} more text blocks[/dim]\n")
+            
+            # Show visual blocks
+            if rubric_visual_blocks:
+                console.print(f"[bold yellow]Visual Content ({len(rubric_visual_blocks)} visuals):[/bold yellow]")
+                for idx, block in enumerate(rubric_visual_blocks, 1):
+                    visual = block.visual
+                    console.print(f"\n[yellow]Visual {idx}:[/yellow]")
+                    console.print(f"  [dim]Type:[/dim] {visual.type}")
+                    console.print(f"  [dim]Source:[/dim] {visual.source_path}")
+                    if visual.caption_text:
+                        console.print(f"  [dim]Caption:[/dim] {visual.caption_text[:200]}...")
+                    if visual.ocr_text:
+                        console.print(f"  [dim]OCR Text:[/dim] {visual.ocr_text[:200]}...")
+                    if visual.detected_labels:
+                        console.print(f"  [dim]Labels:[/dim] {', '.join(visual.detected_labels)}")
+                console.print()
+            
+            # Submission Content
+            console.print(Panel("[bold green]SUBMISSION DOCUMENT[/bold green]", border_style="green"))
+            console.print(f"[dim]Blocks: {len(submission_doc.blocks)} ({sum(1 for b in submission_doc.blocks if b.kind=='text')} text, {sum(1 for b in submission_doc.blocks if b.kind=='visual')} visual)[/dim]\n")
+            
+            submission_text_blocks = [b for b in submission_doc.blocks if b.kind == "text"]
+            submission_visual_blocks = [b for b in submission_doc.blocks if b.kind == "visual"]
+            
+            for idx, block in enumerate(submission_text_blocks[:5], 1):  # Show first 5 blocks
+                console.print(f"[green]Text Block {idx}:[/green]")
+                console.print(f"{block.text[:500]}..." if len(block.text) > 500 else block.text)
+                console.print()
+            
+            if len(submission_text_blocks) > 5:
+                console.print(f"[dim]... and {len(submission_text_blocks) - 5} more text blocks[/dim]\n")
+            
+            # Show visual blocks
+            if submission_visual_blocks:
+                console.print(f"[bold green]Visual Content ({len(submission_visual_blocks)} visuals):[/bold green]")
+                for idx, block in enumerate(submission_visual_blocks, 1):
+                    visual = block.visual
+                    console.print(f"\n[green]Visual {idx}:[/green]")
+                    console.print(f"  [dim]Type:[/dim] {visual.type}")
+                    console.print(f"  [dim]Source:[/dim] {visual.source_path}")
+                    console.print(f"  [dim]ID:[/dim] {visual.id}")
+                    if visual.caption_text:
+                        console.print(f"  [dim]Caption:[/dim] {visual.caption_text[:300]}...")
+                    if visual.ocr_text:
+                        console.print(f"  [dim]OCR Text:[/dim] {visual.ocr_text[:300]}...")
+                    if visual.structured_table:
+                        console.print(f"  [dim]Table:[/dim] {len(visual.structured_table)} rows")
+                        # Show first few rows of table
+                        for row_idx, row in enumerate(visual.structured_table[:3], 1):
+                            console.print(f"    Row {row_idx}: {' | '.join(str(cell)[:30] for cell in row)}")
+                    if visual.detected_labels:
+                        console.print(f"  [dim]Labels:[/dim] {', '.join(visual.detected_labels)}")
+                console.print()
+            
+            console.print("="*80 + "\n")
+        
         # Step 2: Parse rubric into items
         console.print("[cyan]Parsing rubric criteria...[/cyan]")
+        
+        # Debug: Show rubric document structure
+        if debug:
+            console.print(f"[dim]Rubric has {len(rubric_doc.blocks)} blocks:[/dim]")
+            text_blocks = [b for b in rubric_doc.blocks if b.kind == "text"]
+            visual_blocks = [b for b in rubric_doc.blocks if b.kind == "visual"]
+            console.print(f"[dim]  - {len(text_blocks)} text blocks[/dim]")
+            console.print(f"[dim]  - {len(visual_blocks)} visual blocks[/dim]")
+            
+            # Show first few text blocks
+            if text_blocks:
+                console.print(f"[dim]First text block sample:[/dim]")
+                first_text = text_blocks[0].text[:200] if text_blocks[0].text else ""
+                console.print(f"[dim]{first_text}...[/dim]\n")
+        
         rubric_items = parse_rubric_to_items(rubric_doc)
         console.print(f"[green]✓[/green] Found {len(rubric_items)} rubric criteria\n")
         
@@ -648,6 +780,18 @@ def test_evaluation(
             )
         
         console.print(rubric_table)
+        
+        # Show detailed rubric criteria if debug mode
+        if debug and rubric_items:
+            console.print("\n[bold yellow]Detailed Rubric Criteria:[/bold yellow]")
+            for idx, item in enumerate(rubric_items, 1):
+                console.print(f"\n[cyan]Criterion {idx}: {item.title}[/cyan]")
+                console.print(f"[dim]ID:[/dim] {item.id}")
+                console.print(f"[dim]Weight:[/dim] {item.weight}")
+                console.print(f"[dim]Type:[/dim] {item.criterion.value}")
+                console.print(f"[dim]Description:[/dim]")
+                console.print(f"  {item.description}")
+        
         console.print()
         
         # Step 3: Save objects to repository and build fusion context
@@ -691,6 +835,67 @@ def test_evaluation(
         )
         console.print(f"[green]✓[/green] Fusion context built\n")
         
+        # Show fusion context details if debug or show_content
+        if debug or show_content:
+            console.print("\n" + "="*80)
+            console.print("[bold magenta]🔗 FUSION CONTEXT (What LLM Receives)[/bold magenta]")
+            console.print("="*80 + "\n")
+            
+            console.print(Panel("[bold]Context Metadata[/bold]", border_style="magenta"))
+            console.print(f"[dim]Fusion ID:[/dim] {fusion_context.id}")
+            console.print(f"[dim]Token Estimate:[/dim] {fusion_context.token_estimate}")
+            console.print(f"[dim]Visual Count:[/dim] {fusion_context.visual_count}")
+            console.print(f"[dim]Text Block Count:[/dim] {fusion_context.text_block_count}\n")
+            
+            # Show rubric items in fusion
+            console.print(Panel("[bold]Rubric Items in Fusion Context[/bold]", border_style="yellow"))
+            for idx, item in enumerate(fusion_context.rubric_items, 1):
+                console.print(f"[yellow]{idx}. {item['title']}[/yellow]")
+                console.print(f"   [dim]Weight: {item['weight']}, Criterion: {item['criterion']}[/dim]")
+                if debug:
+                    console.print(f"   [dim]Description: {item['desc'][:150]}...[/dim]")
+                console.print()
+            
+            # Show question text sample
+            console.print(Panel("[bold]Question Text Sample[/bold]", border_style="cyan"))
+            q_text_sample = fusion_context.question_text[:500] if fusion_context.question_text else "No question text"
+            console.print(f"{q_text_sample}...")
+            console.print()
+            
+            # Show submission text sample
+            console.print(Panel("[bold]Submission Text Sample[/bold]", border_style="green"))
+            s_text_sample = fusion_context.submission_text[:500] if fusion_context.submission_text else "No submission text"
+            console.print(f"{s_text_sample}...")
+            console.print()
+            
+            # Show submission visuals that will be sent to LLM
+            if fusion_context.submission_visuals:
+                console.print(Panel(f"[bold]Submission Visuals Sent to LLM ({len(fusion_context.submission_visuals)} visuals)[/bold]", border_style="magenta"))
+                for idx, visual in enumerate(fusion_context.submission_visuals, 1):
+                    console.print(f"\n[magenta]Visual {idx} → LLM:[/magenta]")
+                    console.print(f"  [dim]ID:[/dim] {visual.id}")
+                    console.print(f"  [dim]Type:[/dim] {visual.type}")
+                    
+                    if visual.caption:
+                        console.print(f"  [dim]Caption (sent to LLM):[/dim]")
+                        caption_display = visual.caption if len(visual.caption) <= 400 else visual.caption[:400] + "..."
+                        console.print(f"    {caption_display}")
+                    else:
+                        console.print(f"  [yellow]⚠ No caption generated for this visual[/yellow]")
+                    
+                    if visual.ocr_text:
+                        console.print(f"  [dim]OCR Text (sent to LLM):[/dim]")
+                        ocr_display = visual.ocr_text if len(visual.ocr_text) <= 400 else visual.ocr_text[:400] + "..."
+                        console.print(f"    {ocr_display}")
+                    
+                    if visual.rubric_links:
+                        console.print(f"  [dim]Rubric Links:[/dim] {', '.join(visual.rubric_links)}")
+                console.print()
+            else:
+                console.print("[yellow]⚠ No submission visuals in fusion context[/yellow]\n")
+            
+            console.print("="*80 + "\n")
+        
         # Step 4: Run evaluation
         console.print("[bold cyan]Running LLM Evaluation...[/bold cyan]")
         console.print("[dim]This may take a minute depending on the submission length...[/dim]\n")
@@ -701,7 +906,7 @@ def test_evaluation(
             console=console
         ) as progress:
             task = progress.add_task("Evaluating submission with GPT-4...", total=None)
-            eval_result = evaluate_submission(
+            eval_result = evaluate_submission_narrative(
                 rubric_id=rubric_obj.id,
                 question_id=question_obj.id,
                 submission_id=submission_obj.id
@@ -710,54 +915,41 @@ def test_evaluation(
         
         console.print()
         
-        # Step 5: Display results
+        # Step 5: Display results (narrative format)
         console.print("[bold green]Evaluation Results[/bold green]\n")
         
-        # Summary
-        total_score = sum(item.score for item in eval_result.items)
-        # Rubric items have weights (0.0-1.0), scores are 0-100
-        # For display, we'll show the actual scores
-        max_possible = len(rubric_items) * 100  # Assuming max 100 per criterion
-        percentage = (total_score / max_possible * 100) if max_possible > 0 else 0
-        
-        summary = f"""
-[bold]Total Score:[/bold] {total_score:.1f} / {max_possible} ([bold cyan]{percentage:.1f}%[/bold cyan])
-[bold]Criteria Evaluated:[/bold] {len(eval_result.items)}
-"""
-        console.print(Panel(summary, title="Summary", border_style="green"))
-        console.print()
-        
-        # Detailed feedback
-        for idx, item in enumerate(eval_result.items, 1):
-            # Find matching rubric item
-            rubric_item = next((ri for ri in rubric_items if ri.id == item.rubric_item_id), None)
-            criterion_name = rubric_item.title if rubric_item else f"Criterion {idx}"
-            max_score = 100  # Scores are 0-100 per criterion
-            
-            # Create detailed feedback panel
-            feedback_content = f"""[bold]Score:[/bold] {item.score}/{max_score} ([cyan]{item.completeness_percentage}% complete[/cyan])
-
-[bold yellow]Evidence:[/bold yellow]
-{item.evidence}
-
-[bold yellow]Evaluation:[/bold yellow]
-{item.evaluation}
-
-[bold green]Strengths:[/bold green]
-{item.strengths}
-
-[bold red]Gaps:[/bold red]
-{item.gaps}
-
-[bold blue]Guidance:[/bold blue]
-{item.guidance}
-
-[bold magenta]Significance:[/bold magenta]
-{item.significance}
-"""
+        # Display narrative feedback
+        if eval_result.narrative_evaluation:
             console.print(Panel(
-                feedback_content,
-                title=f"[bold]{idx}. {criterion_name[:50]}[/bold]",
+                eval_result.narrative_evaluation,
+                title="[bold]📋 Evaluation[/bold]",
+                border_style="blue",
+                padding=(1, 2)
+            ))
+            console.print()
+        
+        if eval_result.narrative_strengths:
+            console.print(Panel(
+                eval_result.narrative_strengths,
+                title="[bold]✅ Strengths[/bold]",
+                border_style="green",
+                padding=(1, 2)
+            ))
+            console.print()
+        
+        if eval_result.narrative_gaps:
+            console.print(Panel(
+                eval_result.narrative_gaps,
+                title="[bold]⚠️  Gaps & Areas for Improvement[/bold]",
+                border_style="yellow",
+                padding=(1, 2)
+            ))
+            console.print()
+        
+        if eval_result.narrative_guidance:
+            console.print(Panel(
+                eval_result.narrative_guidance,
+                title="[bold]💡 Guidance for Improvement[/bold]",
                 border_style="cyan",
                 padding=(1, 2)
             ))
@@ -773,9 +965,7 @@ def test_evaluation(
                     "rubric_file": str(rubric_path),
                     "submission_file": str(submission_path),
                     "evaluated_at": datetime.now().isoformat(),
-                    "total_score": total_score,
-                    "max_possible": max_possible,
-                    "percentage": percentage
+                    "evaluation_mode": "narrative"
                 }
             }
             

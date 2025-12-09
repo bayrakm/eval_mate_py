@@ -5,8 +5,11 @@
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",
+    "build:prod": "NODE_ENV=production next build",
     "start": "next start -p 3000",
-    "lint": "next lint"
+    "lint": "next lint",
+    "artifact:create": "npm run build:prod && tar -czf evalmate-build.tar.gz .next/ node_modules/ package.json package-lock.json && echo '✅ Artifact created: evalmate-build.tar.gz'",
+    "artifact:extract": "tar -xzf evalmate-build.tar.gz && echo '✅ Artifact extracted'"
   },
   "dependencies": {
     "next": "15.0.3",

@@ -425,15 +425,35 @@ class EvalResult(BaseModel):
     
     Contains overall score, individual criterion scores, feedback,
     and metadata about the evaluation process.
+    
+    Supports both item-based scoring (legacy) and narrative feedback format (new).
     """
     model_config = ConfigDict(strict=True, extra="forbid")
     
     submission_id: str = Field(description="Associated submission identifier")
     rubric_id: str = Field(description="Associated rubric identifier")
     total: float = Field(ge=0.0, le=100.0, description="Weighted total score (0-100)")
-    items: List[ScoreItem] = Field(description="Individual criterion scores")
-    overall_feedback: str = Field(description="General feedback for the submission")
+    items: List[ScoreItem] = Field(default_factory=list, description="Individual criterion scores (legacy format)")
+    overall_feedback: str = Field(default="", description="General feedback for the submission")
     metadata: Dict[str, str] = Field(default_factory=dict, description="Additional evaluation metadata")
+    
+    # New narrative feedback fields
+    narrative_evaluation: Optional[str] = Field(
+        default=None,
+        description="Comprehensive paragraph evaluating submission against all rubric criteria"
+    )
+    narrative_strengths: Optional[str] = Field(
+        default=None,
+        description="Detailed paragraph explaining what was done well"
+    )
+    narrative_gaps: Optional[str] = Field(
+        default=None,
+        description="Comprehensive paragraph identifying shortcomings and missing elements"
+    )
+    narrative_guidance: Optional[str] = Field(
+        default=None,
+        description="Detailed paragraph providing actionable improvement advice"
+    )
     
     @field_validator("submission_id", "rubric_id")
     @classmethod
@@ -445,16 +465,23 @@ class EvalResult(BaseModel):
     @field_validator("overall_feedback")
     @classmethod
     def validate_feedback(cls, v: str) -> str:
-        if not v.strip():
-            raise ValueError("Overall feedback cannot be empty")
-        return v.strip()
+        # Allow empty for narrative format
+        return v.strip() if v else ""
     
     @field_validator("items")
     @classmethod
     def validate_items_exist(cls, v: List[ScoreItem]) -> List[ScoreItem]:
-        if not v:
-            raise ValueError("Evaluation must have at least one score item")
+        # Allow empty list for narrative format
         return v
+    
+    def is_narrative_format(self) -> bool:
+        """Check if this result uses narrative feedback format."""
+        return bool(
+            self.narrative_evaluation or 
+            self.narrative_strengths or 
+            self.narrative_gaps or 
+            self.narrative_guidance
+        )
 
 
 # ============================================================================

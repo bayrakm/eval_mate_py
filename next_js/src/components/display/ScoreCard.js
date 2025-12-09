@@ -55,7 +55,7 @@ export function ScoreCard({ item, rubricItem }) {
                     radius="sm"
                     style={{ backgroundColor: "#f0f9ff" }}
                   >
-                    <Text size="xs" fw={600} c="blue.7" mb={4}>
+                    <Text size="xs" fw={600} c="blue.7" mb={4} ta="center">
                       📎 Evidence:
                     </Text>
                     <Text
@@ -75,7 +75,7 @@ export function ScoreCard({ item, rubricItem }) {
                     radius="sm"
                     style={{ backgroundColor: "#fef3f2" }}
                   >
-                    <Text size="xs" fw={600} c="blue.7" mb={4}>
+                    <Text size="xs" fw={600} c="blue.7" mb={4} ta="center">
                       🔍 Evaluation:
                     </Text>
                     <Text
@@ -95,7 +95,7 @@ export function ScoreCard({ item, rubricItem }) {
                     radius="sm"
                     style={{ backgroundColor: "#f0fdf4" }}
                   >
-                    <Text size="xs" fw={600} c="green.7" mb={4}>
+                    <Text size="xs" fw={600} c="green.7" mb={4} ta="center">
                       ✅ Strengths:
                     </Text>
                     <Text
@@ -115,7 +115,7 @@ export function ScoreCard({ item, rubricItem }) {
                     radius="sm"
                     style={{ backgroundColor: "#fff7ed" }}
                   >
-                    <Text size="xs" fw={600} c="red.7" mb={4}>
+                    <Text size="xs" fw={600} c="red.7" mb={4} ta="center">
                       ⚠️ Gaps & Weaknesses:
                     </Text>
                     <Text
@@ -135,7 +135,7 @@ export function ScoreCard({ item, rubricItem }) {
                     radius="sm"
                     style={{ backgroundColor: "#fefce8" }}
                   >
-                    <Text size="xs" fw={600} c="orange.7" mb={4}>
+                    <Text size="xs" fw={600} c="orange.7" mb={4} ta="center">
                       💡 Guidance for Improvement:
                     </Text>
                     <Text
@@ -155,7 +155,7 @@ export function ScoreCard({ item, rubricItem }) {
                     radius="sm"
                     style={{ backgroundColor: "#faf5ff" }}
                   >
-                    <Text size="xs" fw={600} c="violet.7" mb={4}>
+                    <Text size="xs" fw={600} c="violet.7" mb={4} ta="center">
                       🎯 Significance:
                     </Text>
                     <Text

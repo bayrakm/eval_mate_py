@@ -85,7 +85,7 @@ def preprocess_image_for_ocr(img: Image.Image) -> Image.Image:
         return Image.fromarray(thresh)
         
     except Exception as e:
-        logger.warning(f"Image preprocessing failed: {e}, using original image")
+        logger.debug(f"Image preprocessing failed: {e}, using original image")
         return img.convert('L')
 
 
