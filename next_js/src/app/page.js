@@ -340,99 +340,6 @@ export default function HomePage() {
     [addMessage, setState]
   );
 
-  const handleBuildFusion = useCallback(async () => {
-    if (
-      !state.selectedRubric ||
-      !state.selectedQuestion ||
-      !state.selectedSubmission
-    ) {
-      addMessage("❌ Please select a rubric, question, and submission first");
-      notifications.show({
-        title: "Warning",
-        message: "Please select all required resources",
-        color: "orange",
-      });
-      return;
-    }
-
-    let progressInterval = null;
-    try {
-      setLoading(LOADING_STATES.BUILDING);
-      addMessage("Building fusion context...", "user");
-
-      let progressValue = 0;
-      setProgress({
-        type: "building",
-        value: 0,
-        label: "Building fusion context...",
-      });
-
-      progressInterval = setInterval(() => {
-        progressValue = Math.min(progressValue + 5, 90);
-        setProgress({
-          type: "building",
-          value: progressValue,
-          label: "Processing documents and building context...",
-        });
-      }, 200);
-
-      const fusion = await api.buildFusion(
-        state.selectedRubric.id,
-        state.selectedQuestion.id,
-        state.selectedSubmission.id
-      );
-
-      if (progressInterval) {
-        clearInterval(progressInterval);
-      }
-
-      setProgress({
-        type: "building",
-        value: 100,
-        label: "Fusion context built successfully!",
-      });
-
-      setState((prev) => ({
-        ...prev,
-        fusion,
-        result: null,
-      }));
-
-      setTimeout(() => clearProgress(), 500);
-      addMessage(
-        `✅ Fusion context built successfully! Token estimate: ${fusion.token_estimate}, Visual count: ${fusion.visual_count}`
-      );
-      notifications.show({
-        title: "Success",
-        message: "Fusion context built successfully",
-        color: "green",
-      });
-    } catch (error) {
-      if (progressInterval) {
-        clearInterval(progressInterval);
-      }
-      clearProgress();
-      const message = error.message || "Failed to build fusion context";
-      addMessage(`❌ ${message}`);
-      notifications.show({
-        title: "Error",
-        message,
-        color: "red",
-      });
-    } finally {
-      setLoading(LOADING_STATES.IDLE);
-    }
-  }, [
-    state.selectedRubric,
-    state.selectedQuestion,
-    state.selectedSubmission,
-    addMessage,
-    setLoading,
-    setState,
-    setProgress,
-    clearProgress,
-  ]);
-
   const handleEvaluate = useCallback(async () => {
     if (
       !state.selectedRubric ||
@@ -448,18 +355,73 @@ export default function HomePage() {
       return;
     }
 
-    if (!state.fusion) {
-      addMessage("❌ Please build fusion context first");
-      notifications.show({
-        title: "Warning",
-        message: "Please build fusion context first",
-        color: "orange",
-      });
-      return;
-    }
-
     let progressInterval = null;
+    const startTime = Date.now();
     try {
+      // Step 1: Build Fusion if not already built
+      if (!state.fusion) {
+        setLoading(LOADING_STATES.BUILDING);
+        addMessage("Building fusion context...", "user");
+
+        let progressValue = 0;
+        setProgress({
+          type: "building",
+          value: 0,
+          label: "Building fusion context...",
+        });
+
+        progressInterval = setInterval(() => {
+          progressValue = Math.min(progressValue + 2, 85);
+          setProgress({
+            type: "building",
+            value: progressValue,
+            label: "Processing documents and building context...",
+          });
+        }, 400);
+
+        const fusion = await api.buildFusion(
+          state.selectedRubric.id,
+          state.selectedQuestion.id,
+          state.selectedSubmission.id
+        );
+
+        const buildDuration = Date.now() - startTime;
+        const minBuildDuration = 3000; // 3 seconds minimum
+
+        if (progressInterval) {
+          clearInterval(progressInterval);
+          progressInterval = null;
+        }
+
+        setProgress({
+          type: "building",
+          value: 100,
+          label: "Fusion context built successfully!",
+        });
+
+        setState((prev) => ({
+          ...prev,
+          fusion,
+          result: null,
+        }));
+
+        addMessage(
+          `✅ Fusion context built! Token estimate: ${fusion.token_estimate}, Visual count: ${fusion.visual_count}`
+        );
+
+        // Ensure minimum duration for visual feedback
+        if (buildDuration < minBuildDuration) {
+          await new Promise((resolve) =>
+            setTimeout(resolve, minBuildDuration - buildDuration)
+          );
+        }
+
+        // Wait additional 2 seconds before proceeding to evaluation
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        clearProgress();
+      }
+
+      // Step 2: Run Evaluation
       setLoading(LOADING_STATES.EVALUATING);
       addMessage("Running LLM evaluation...", "user");
 
@@ -478,6 +440,15 @@ export default function HomePage() {
           label: "Analyzing submission and generating feedback...",
         });
       }, 300);
+
+      // Get the current fusion state (either from step 1 or existing state)
+      const currentFusion =
+        state.fusion ||
+        (await api.buildFusion(
+          state.selectedRubric.id,
+          state.selectedQuestion.id,
+          state.selectedSubmission.id
+        ));
 
       const result = (await api.evaluate(
         state.selectedRubric.id,
@@ -547,10 +518,9 @@ export default function HomePage() {
 
   const canUploadQuestion = Boolean(rubricId);
   const canUploadSubmission = Boolean(rubricId && questionId);
-  const canBuildFusion = Boolean(
+  const canEvaluate = Boolean(
     rubricId && questionId && state.selectedSubmission?.id
   );
-  const canEvaluate = Boolean(state.fusion?.id);
 
   return (
     <ProtectedRoute>
@@ -654,9 +624,7 @@ export default function HomePage() {
                     </Group>
                     <Stack gap="md">
                       <ActionButtons
-                        onBuildFusion={handleBuildFusion}
                         onEvaluate={handleEvaluate}
-                        canBuildFusion={canBuildFusion}
                         canEvaluate={canEvaluate}
                         loading={state.loading}
                       />
@@ -668,14 +636,11 @@ export default function HomePage() {
                   </div>
 
                   <Divider />
-
                   <div>
-                    <Group gap="xs" mb="md">
-                      <Text size="sm" fw={600}>
-                        Messages
-                      </Text>
-                    </Group>
-                    <MessageList messages={state.messages} />
+                    <ResultsPanel
+                      result={state.result}
+                      selectedRubric={state.selectedRubric}
+                    />
                   </div>
                 </Stack>
               </Stack>
@@ -685,10 +650,12 @@ export default function HomePage() {
               span={{ base: 12, lg: 4 }}
               className="sticky-results-panel"
             >
-              <ResultsPanel
-                result={state.result}
-                selectedRubric={state.selectedRubric}
-              />
+              <Group gap="xs" mb="md">
+                <Text size="sm" fw={600}>
+                  Messages
+                </Text>
+              </Group>
+              <MessageList messages={state.messages} />
             </Grid.Col>
           </Grid>
         </Container>
