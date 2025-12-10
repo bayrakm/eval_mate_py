@@ -7,13 +7,12 @@ const nextConfig = {
     NEXT_PUBLIC_API_URL:
       process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
   },
-  // Optimasi untuk artifact deployment di server dengan resource terbatas
   experimental: {
     optimizePackageImports: ["@mantine/core", "@mantine/hooks"],
   },
   onDemandEntries: {
-    maxInactiveAge: 25 * 1000,
-    pagesBufferLength: 2,
+    maxInactiveAge: 5 * 1000,
+    pagesBufferLength: 1,
   },
 };
 
