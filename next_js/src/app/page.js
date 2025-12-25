@@ -476,16 +476,31 @@ export default function HomePage() {
       }));
 
       setTimeout(() => clearProgress(), 500);
-      addMessage(
-        `✅ Evaluation complete! Total score: ${result.total.toFixed(1)}/100 (${
-          result.items?.length || 0
-        } items graded)`
-      );
-      notifications.show({
-        title: "Success",
-        message: `Evaluation complete! Score: ${result.total.toFixed(1)}/100`,
-        color: "green",
-      });
+
+      // Handle both narrative and structured formats
+      const isNarrative =
+        result.narrative_evaluation || result.narrative_strengths;
+      if (isNarrative) {
+        addMessage(`✅ Evaluation complete! Narrative feedback generated.`);
+        notifications.show({
+          title: "Success",
+          message: "Evaluation complete! Feedback generated.",
+          color: "green",
+        });
+      } else {
+        addMessage(
+          `✅ Evaluation complete! Total score: ${
+            result.total?.toFixed(1) || "N/A"
+          }/100 (${result.items?.length || 0} items graded)`
+        );
+        notifications.show({
+          title: "Success",
+          message: `Evaluation complete! Score: ${
+            result.total?.toFixed(1) || "N/A"
+          }/100`,
+          color: "green",
+        });
+      }
     } catch (error) {
       if (progressInterval) {
         clearInterval(progressInterval);

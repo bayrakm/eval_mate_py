@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 from typing import Optional
 import logging
 
-from app.core.llm.evaluator import evaluate_submission
+from app.core.llm.evaluator import evaluate_submission_narrative
 from app.core.models.schemas import EvalResult
 from app.core.store import repo
 
@@ -25,19 +25,18 @@ def evaluate(
     submission_id: str = Query(..., description="ID of the student submission")
 ) -> EvalResult:
     """
-    Evaluate a student submission against a rubric using LLM.
+    Evaluate a student submission against a rubric using LLM (Narrative Format).
     
-    This endpoint triggers the complete evaluation pipeline:
+    This endpoint triggers the evaluation pipeline using narrative feedback:
     1. Builds fusion context from rubric, question, and submission
-    2. Evaluates each rubric criterion using LLM
-    3. Computes weighted total score
-    4. Validates and persists the result
+    2. Runs LLM evaluation with narrative format (no per-item scores)
+    3. Returns comprehensive paragraph-style feedback
     
-    Returns the complete EvalResult with scores, justifications, and feedback.
+    Returns EvalResult with narrative_evaluation, narrative_strengths, narrative_gaps, and narrative_guidance.
     """
     try:
         logger.info(f"API evaluation request: rubric={rubric_id}, question={question_id}, submission={submission_id}")
-        result = evaluate_submission(rubric_id, question_id, submission_id)
+        result = evaluate_submission_narrative(rubric_id, question_id, submission_id)
         return result
     except Exception as e:
         logger.error(f"Evaluation failed: {e}")

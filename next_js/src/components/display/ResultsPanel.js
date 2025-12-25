@@ -1,6 +1,6 @@
 "use client";
 
-import { Paper, Stack, Title, Text, Divider, Center } from "@mantine/core";
+import { Paper, Stack, Title, Text, Divider, Center, Box } from "@mantine/core";
 import { IconClipboardCheck } from "@tabler/icons-react";
 import { ScoreCard } from "./ScoreCard";
 import { formatScore } from "../../lib/utils";
@@ -27,6 +27,119 @@ export function ResultsPanel({ result, selectedRubric }) {
     );
   }
 
+  // Check if this is narrative format or structured format
+  const isNarrative = result.narrative_evaluation || result.narrative_strengths;
+
+  if (isNarrative) {
+    // NARRATIVE FORMAT - Display as panels
+    return (
+      <Paper
+        p="lg"
+        withBorder
+        radius="md"
+        style={{
+          maxHeight: "calc(100vh - 200px)",
+          overflowY: "auto",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <Stack gap="md">
+          {result.narrative_evaluation && (
+            <Box>
+              <Text
+                size="xs"
+                c="dimmed"
+                tt="uppercase"
+                fw={600}
+                mb="xs"
+                ta="center"
+              >
+                📋 Evaluation
+              </Text>
+              <Text size="sm" style={{ lineHeight: 1.6, textAlign: "justify" }}>
+                {result.narrative_evaluation}
+              </Text>
+            </Box>
+          )}
+
+          {result.narrative_strengths && (
+            <>
+              <Divider />
+              <Box>
+                <Text
+                  size="xs"
+                  c="dimmed"
+                  tt="uppercase"
+                  fw={600}
+                  mb="xs"
+                  ta="center"
+                >
+                  ✅ Strengths
+                </Text>
+                <Text
+                  size="sm"
+                  style={{ lineHeight: 1.6, textAlign: "justify" }}
+                >
+                  {result.narrative_strengths}
+                </Text>
+              </Box>
+            </>
+          )}
+
+          {result.narrative_gaps && (
+            <>
+              <Divider />
+              <Box>
+                <Text
+                  size="xs"
+                  c="dimmed"
+                  tt="uppercase"
+                  fw={600}
+                  mb="xs"
+                  ta="center"
+                >
+                  ⚠️ Gaps & Areas for Improvement
+                </Text>
+                <Text
+                  size="sm"
+                  style={{ lineHeight: 1.6, textAlign: "justify" }}
+                >
+                  {result.narrative_gaps}
+                </Text>
+              </Box>
+            </>
+          )}
+
+          {result.narrative_guidance && (
+            <>
+              <Divider />
+              <Box>
+                <Text
+                  size="xs"
+                  c="dimmed"
+                  tt="uppercase"
+                  fw={600}
+                  mb="xs"
+                  ta="center"
+                >
+                  💡 Guidance for Improvement
+                </Text>
+                <Text
+                  size="sm"
+                  style={{ lineHeight: 1.6, textAlign: "justify" }}
+                >
+                  {result.narrative_guidance}
+                </Text>
+              </Box>
+            </>
+          )}
+        </Stack>
+      </Paper>
+    );
+  }
+
+  // STRUCTURED FORMAT - Display as before (backward compatibility)
   return (
     <Paper
       p="lg"
@@ -45,7 +158,7 @@ export function ResultsPanel({ result, selectedRubric }) {
             Total Score
           </Text>
           <Title order={1} c="orange.7">
-            {formatScore(result.total)} / 100
+            {result.total ? formatScore(result.total) : "N/A"} / 100
           </Title>
         </div>
 

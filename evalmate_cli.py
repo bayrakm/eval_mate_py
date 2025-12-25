@@ -265,69 +265,112 @@ def list_and_choose_submission(rubric_id: str, question_id: str) -> str:
 
 
 def display_evaluation_results(result: EvalResult):
-    """Display evaluation results in a formatted table."""
+    """Display evaluation results - handles both structured and narrative formats."""
     console.print("\n[bold green]EVALUATION COMPLETE![/bold green]")
     
-    # Create results table
-    table = Table(title="Rubric Evaluation Summary", box=box.DOUBLE_EDGE)
-    table.add_column("Criterion ID", style="cyan", no_wrap=True, width=15)
-    table.add_column("Score", justify="right", style="bold yellow", width=8)
-    table.add_column("Max", justify="right", style="dim", width=6)
-    table.add_column("Justification", style="white", min_width=50)
+    # Check if this is narrative format (has narrative fields) or structured format
+    is_narrative = hasattr(result, 'narrative_evaluation') and result.narrative_evaluation
     
-    for item in result.items:
-        # Truncate long justifications for table display
-        justification = item.justification
-        if len(justification) > 80:
-            justification = justification[:77] + "..."
+    if is_narrative:
+        # NARRATIVE FORMAT - Display as paragraphs like test command
+        if result.narrative_evaluation:
+            console.print(Panel(
+                result.narrative_evaluation,
+                title="[bold]📋 Evaluation[/bold]",
+                border_style="blue",
+                padding=(1, 2)
+            ))
+            console.print()
         
-        # Color-code scores
-        score_str = str(round(item.score, 1))
-        if item.score >= 80:
-            score_style = "bold green"
-        elif item.score >= 60:
-            score_style = "bold yellow"
-        else:
-            score_style = "bold red"
+        if result.narrative_strengths:
+            console.print(Panel(
+                result.narrative_strengths,
+                title="[bold]✅ Strengths[/bold]",
+                border_style="green",
+                padding=(1, 2)
+            ))
+            console.print()
         
-        table.add_row(
-            item.rubric_item_id[:12] + "..." if len(item.rubric_item_id) > 15 else item.rubric_item_id,
-            f"[{score_style}]{score_str}[/{score_style}]",
-            "100",
-            justification
-        )
-    
-    console.print(table)
-    
-    # Overall score panel
-    total_score = round(result.total, 1)
-    if total_score >= 80:
-        score_color = "bold green"
-        emoji = "EXCELLENT"
-    elif total_score >= 60:
-        score_color = "bold yellow"
-        emoji = "GOOD"
+        if result.narrative_gaps:
+            console.print(Panel(
+                result.narrative_gaps,
+                title="[bold]⚠️  Gaps & Areas for Improvement[/bold]",
+                border_style="yellow",
+                padding=(1, 2)
+            ))
+            console.print()
+        
+        if result.narrative_guidance:
+            console.print(Panel(
+                result.narrative_guidance,
+                title="[bold]💡 Guidance for Improvement[/bold]",
+                border_style="cyan",
+                padding=(1, 2)
+            ))
+            console.print()
     else:
-        score_color = "bold red"
-        emoji = "NEEDS WORK"
-    
-    score_panel = Panel(
-        f"[{score_color}]{emoji} - Total Score: {total_score}/100[/{score_color}]",
-        title="Final Grade",
-        border_style=score_color.split()[-1],
-        padding=(1, 2)
-    )
-    console.print(score_panel)
-    
-    # Overall feedback
-    if result.overall_feedback:
-        feedback_panel = Panel(
-            f"[italic]{result.overall_feedback}[/italic]",
-            title="Overall Feedback",
-            border_style="blue",
+        # STRUCTURED FORMAT - Display as table (legacy format)
+        if result.items and len(result.items) > 0:
+            # Create results table
+            table = Table(title="Rubric Evaluation Summary", box=box.DOUBLE_EDGE)
+            table.add_column("Criterion ID", style="cyan", no_wrap=True, width=15)
+            table.add_column("Score", justify="right", style="bold yellow", width=8)
+            table.add_column("Max", justify="right", style="dim", width=6)
+            table.add_column("Justification", style="white", min_width=50)
+            
+            for item in result.items:
+                # Truncate long justifications for table display
+                justification = item.justification
+                if len(justification) > 80:
+                    justification = justification[:77] + "..."
+                
+                # Color-code scores
+                score_str = str(round(item.score, 1))
+                if item.score >= 80:
+                    score_style = "bold green"
+                elif item.score >= 60:
+                    score_style = "bold yellow"
+                else:
+                    score_style = "bold red"
+                
+                table.add_row(
+                    item.rubric_item_id[:12] + "..." if len(item.rubric_item_id) > 15 else item.rubric_item_id,
+                    f"[{score_style}]{score_str}[/{score_style}]",
+                    "100",
+                    justification
+                )
+            
+            console.print(table)
+        
+        # Overall score panel
+        total_score = round(result.total, 1) if result.total else 0
+        if total_score >= 80:
+            score_color = "bold green"
+            emoji = "EXCELLENT"
+        elif total_score >= 60:
+            score_color = "bold yellow"
+            emoji = "GOOD"
+        else:
+            score_color = "bold red"
+            emoji = "NEEDS WORK"
+        
+        score_panel = Panel(
+            f"[{score_color}]{emoji} - Total Score: {total_score}/100[/{score_color}]",
+            title="Final Grade",
+            border_style=score_color.split()[-1],
             padding=(1, 2)
         )
-        console.print(feedback_panel)
+        console.print(score_panel)
+        
+        # Overall feedback
+        if result.overall_feedback:
+            feedback_panel = Panel(
+                f"[italic]{result.overall_feedback}[/italic]",
+                title="Overall Feedback",
+                border_style="blue",
+                padding=(1, 2)
+            )
+            console.print(feedback_panel)
 
 
 def save_results(result: EvalResult) -> tuple[str, str]:
@@ -451,7 +494,7 @@ def run_evaluation():
                 
                 # Set encoding-safe handlers
                 try:
-                    result = evaluate_submission(rubric_id, question_id, submission_id)
+                    result = evaluate_submission_narrative(rubric_id, question_id, submission_id)
                     progress.update(task, description="SUCCESS: Evaluation completed!")
                 finally:
                     # Restore original stdout/stderr
