@@ -15,6 +15,7 @@ Usage:
 import os
 import json
 import sys
+import logging
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 
@@ -45,6 +46,7 @@ from app.core.models.schemas import EvalResult
 # Initialize Rich console and Typer app
 console = Console()
 app = typer.Typer(help="EvalMate CLI - Automated multimodal grading assistant")
+logger = logging.getLogger(__name__)
 
 
 def display_banner():
@@ -614,6 +616,11 @@ def test_evaluation(
         False,
         "--show-content",
         help="Display full parsed content of all documents"
+    ),
+    chat: bool = typer.Option(
+        True,
+        "--chat/--no-chat",
+        help="Start interactive Q&A chat session after evaluation"
     )
 ):
     """
@@ -943,18 +950,14 @@ def test_evaluation(
         console.print("[bold cyan]Running LLM Evaluation...[/bold cyan]")
         console.print("[dim]This may take a minute depending on the submission length...[/dim]\n")
         
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            console=console
-        ) as progress:
-            task = progress.add_task("Evaluating submission with GPT-4...", total=None)
-            eval_result = evaluate_submission_narrative(
-                rubric_id=rubric_obj.id,
-                question_id=question_obj.id,
-                submission_id=submission_obj.id
-            )
-            progress.update(task, description="[green]✓[/green] Evaluation complete")
+        # Simple status without spinner to avoid encoding issues on Windows
+        console.print("[yellow]Evaluating submission with GPT-4...[/yellow]")
+        eval_result = evaluate_submission_narrative(
+            rubric_id=rubric_obj.id,
+            question_id=question_obj.id,
+            submission_id=submission_obj.id
+        )
+        console.print("[green]Evaluation complete![/green]")
         
         console.print()
         
@@ -965,7 +968,7 @@ def test_evaluation(
         if eval_result.narrative_evaluation:
             console.print(Panel(
                 eval_result.narrative_evaluation,
-                title="[bold]📋 Evaluation[/bold]",
+                title="[bold]Evaluation[/bold]",
                 border_style="blue",
                 padding=(1, 2)
             ))
@@ -974,7 +977,7 @@ def test_evaluation(
         if eval_result.narrative_strengths:
             console.print(Panel(
                 eval_result.narrative_strengths,
-                title="[bold]✅ Strengths[/bold]",
+                title="[bold]Strengths[/bold]",
                 border_style="green",
                 padding=(1, 2)
             ))
@@ -983,7 +986,7 @@ def test_evaluation(
         if eval_result.narrative_gaps:
             console.print(Panel(
                 eval_result.narrative_gaps,
-                title="[bold]⚠️  Gaps & Areas for Improvement[/bold]",
+                title="[bold]Gaps & Areas for Improvement[/bold]",
                 border_style="yellow",
                 padding=(1, 2)
             ))
@@ -992,7 +995,7 @@ def test_evaluation(
         if eval_result.narrative_guidance:
             console.print(Panel(
                 eval_result.narrative_guidance,
-                title="[bold]💡 Guidance for Improvement[/bold]",
+                title="[bold]Guidance for Improvement[/bold]",
                 border_style="cyan",
                 padding=(1, 2)
             ))
@@ -1018,6 +1021,92 @@ def test_evaluation(
             console.print(f"[green]✓[/green] Results saved to: {output}")
         
         console.print("\n[bold green]Test evaluation complete![/bold green]")
+        
+        # Step 7: Start interactive chat session if requested
+        if chat:
+            console.print("\n")
+            console.rule("[bold cyan]Interactive Q&A Session[/bold cyan]")
+            console.print("\n[dim]You can now ask questions about your evaluation.[/dim]")
+            console.print("[dim]Type 'exit', 'quit', or 'q' to end the chat session.[/dim]\n")
+            
+            try:
+                from app.core.chat.service import ChatService
+                from rich.prompt import Prompt
+                
+                # Get the latest evaluation for this submission (just saved)
+                eval_list = repo.list_eval_results()
+                if not eval_list:
+                    console.print("[yellow]No evaluations found. Cannot start chat.[/yellow]")
+                    raise typer.Exit(0)
+                
+                # Find the most recent eval for this submission
+                latest_eval = None
+                for eval_meta in eval_list:
+                    if eval_meta.get('submission_id') == submission_obj.id:
+                        latest_eval = eval_meta
+                        break
+                
+                if not latest_eval:
+                    console.print("[yellow]Could not find evaluation. Cannot start chat.[/yellow]")
+                    raise typer.Exit(0)
+                
+                eval_id = latest_eval['id']
+                
+                # Initialize chat service and create session
+                chat_service = ChatService(repo)
+                chat_session = chat_service.create_session(
+                    eval_id=eval_id,
+                    question_id=question_obj.id,
+                    rubric_id=rubric_obj.id,
+                    submission_id=submission_obj.id
+                )
+                
+                console.print("[green]Chat session started! Ask me anything about your evaluation.[/green]\n")
+                
+                # Interactive chat loop
+                while True:
+                    try:
+                        # Get user input
+                        user_input = Prompt.ask("[bold blue]Your question[/bold blue]")
+                        
+                        # Check for exit commands
+                        if user_input.lower().strip() in ['exit', 'quit', 'q']:
+                            console.print("\n[green]Chat session ended. Your feedback is available above.[/green]")
+                            break
+                        
+                        # Skip empty messages
+                        if not user_input.strip():
+                            continue
+                        
+                        # Get AI response (simple message to avoid encoding issues)
+                        console.print("[dim]Thinking...[/dim]")
+                        response = chat_service.send_message(chat_session, user_input)
+                        
+                        # Display response
+                        console.print(Panel(
+                            response,
+                            title="[bold green]AI Assistant[/bold green]",
+                            border_style="green",
+                            padding=(1, 2)
+                        ))
+                        console.print()
+                        
+                    except KeyboardInterrupt:
+                        console.print("\n\n[yellow]Chat interrupted. Exiting...[/yellow]")
+                        break
+                    except Exception as chat_error:
+                        console.print(f"[red]Chat error: {chat_error}[/red]")
+                        logger.error(f"Chat error: {chat_error}", exc_info=True)
+                        continue
+                
+                # Session summary
+                msg_count = chat_session.message_count()
+                if msg_count > 0:
+                    console.print(f"\n[dim]Chat session ended. You asked {len(chat_session.get_user_messages())} question(s).[/dim]")
+                
+            except Exception as e:
+                console.print(f"\n[yellow]Could not start chat session: {e}[/yellow]")
+                logger.error(f"Failed to start chat: {e}", exc_info=True)
         
     except Exception as e:
         console.print(f"\n[bold red]ERROR: {e}[/bold red]")

@@ -553,6 +553,10 @@ app.include_router(fusion_routes.router)
 from app.api import evaluate_routes
 app.include_router(evaluate_routes.router)
 
+# Include chat routes
+from app.api import chat_routes
+app.include_router(chat_routes.router)
+
 
 # Health check endpoint
 @app.get("/health")
