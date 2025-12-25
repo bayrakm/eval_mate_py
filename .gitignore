@@ -85,6 +85,7 @@ lerna-debug.log*
 # Ignore entire data directories (runtime data, user-generated content)
 # These folders contain database files, uploads, generated JSONs, and assets
 data/
+Diagram.drawio
 
 # Ignore all files in app/data subdirectories except .gitkeep
 !app/data/
