@@ -41,6 +41,26 @@ export default function HomePage() {
 
   const { data: session } = useSession();
 
+  const handleNewEvaluation = useCallback(() => {
+    setState((prev) => ({
+      ...prev,
+      selectedRubric: null,
+      selectedQuestion: null,
+      selectedSubmission: null,
+      fusion: null,
+      result: null,
+      messages: [],
+      loading: "idle",
+      progress: null,
+    }));
+    addMessage("🆕 Started a new evaluation. Please upload your resources.");
+    notifications.show({
+      title: "New Evaluation",
+      message: "Ready to start a new evaluation. Upload your resources!",
+      color: "blue",
+    });
+  }, [setState, addMessage]);
+
   const handleRubricUpload = useCallback(
     async (file) => {
       const startTime = Date.now();
@@ -538,7 +558,7 @@ export default function HomePage() {
 
   return (
     <ProtectedRoute>
-      <AppLayout sidebarContent={null}>
+      <AppLayout sidebarContent={null} onNewEvaluation={handleNewEvaluation}>
         <Container size="xl" p="md" style={{ margin: "0 auto" }}>
           <Grid gutter="md">
             <Grid.Col span={{ base: 12, lg: 8 }}>

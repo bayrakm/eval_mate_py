@@ -1,13 +1,23 @@
 "use client";
 
 import { AppShell, Group, Button } from "@mantine/core";
-import { IconLogout } from "@tabler/icons-react";
+import { IconLogout, IconPlus } from "@tabler/icons-react";
 import { signOut, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Sidebar } from "./Sidebar";
 
-export function AppLayout({ children, sidebarContent }) {
+export function AppLayout({ children, sidebarContent, onNewEvaluation }) {
   const hasSidebar = sidebarContent !== null;
   const { data: session } = useSession();
+  const router = useRouter();
+
+  const handleNewEvaluation = async () => {
+    if (onNewEvaluation) {
+      onNewEvaluation();
+    }
+    // Optionally scroll to top
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const handleLogout = async () => {
     await signOut({ redirect: true, callbackUrl: "/login" });
@@ -35,6 +45,15 @@ export function AppLayout({ children, sidebarContent }) {
                 Welcome, {session.user.name}
               </span>
             )}
+            <Button
+              size="xs"
+              variant="filled"
+              color="orange"
+              leftSection={<IconPlus size={14} />}
+              onClick={handleNewEvaluation}
+            >
+              New Evaluation
+            </Button>
             <Button
               size="xs"
               variant="default"
