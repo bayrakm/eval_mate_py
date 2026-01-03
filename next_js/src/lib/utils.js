@@ -1,6 +1,3 @@
-/**
- * Format file size to human readable format
- */
 export function formatFileSize(bytes) {
   if (bytes === 0) return "0 Bytes";
   const k = 1024;
@@ -9,9 +6,6 @@ export function formatFileSize(bytes) {
   return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
 }
 
-/**
- * Format date to readable format
- */
 export function formatDate(date) {
   if (typeof date === "string") {
     date = new Date(date);
@@ -25,32 +19,20 @@ export function formatDate(date) {
   }).format(date);
 }
 
-/**
- * Validate file format
- */
 export function isValidFileFormat(filename, allowedFormats) {
   const ext = filename.split(".").pop().toLowerCase();
   return allowedFormats.includes(ext);
 }
 
-/**
- * Get file extension
- */
 export function getFileExtension(filename) {
   return filename.split(".").pop().toLowerCase();
 }
 
-/**
- * Truncate text to specified length
- */
 export function truncateText(text, length = 100) {
   if (text.length <= length) return text;
   return text.substring(0, length) + "...";
 }
 
-/**
- * Sanitize filename
- */
 export function sanitizeFilename(filename) {
   return filename
     .replace(/[^a-zA-Z0-9.-]/g, "_")
@@ -58,23 +40,14 @@ export function sanitizeFilename(filename) {
     .trim();
 }
 
-/**
- * Generate unique ID
- */
 export function generateId() {
   return `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
-/**
- * Format score/percentage
- */
 export function formatScore(score, decimals = 1) {
   return `${Number(score).toFixed(decimals)}%`;
 }
 
-/**
- * Get color based on score
- */
 export function getScoreColor(score) {
   if (score >= 80) return "#10b981"; // green
   if (score >= 60) return "#f59e0b"; // amber
@@ -82,9 +55,6 @@ export function getScoreColor(score) {
   return "#ef4444"; // red
 }
 
-/**
- * Format criterion name for display
- */
 export function formatCriterionName(criterion) {
   const names = {
     content: "Content",
@@ -97,9 +67,6 @@ export function formatCriterionName(criterion) {
   return names[criterion] || criterion;
 }
 
-/**
- * Get initials from name
- */
 export function getInitials(name) {
   return name
     .split(" ")
@@ -108,9 +75,6 @@ export function getInitials(name) {
     .toUpperCase();
 }
 
-/**
- * Check if API URL is accessible
- */
 export async function isApiAccessible(url) {
   try {
     const response = await fetch(url, { method: "HEAD" });
@@ -120,9 +84,6 @@ export async function isApiAccessible(url) {
   }
 }
 
-/**
- * Retry async function with exponential backoff
- */
 export async function retryAsync(fn, retries = 3, delay = 1000) {
   for (let i = 0; i < retries; i++) {
     try {
@@ -136,9 +97,6 @@ export async function retryAsync(fn, retries = 3, delay = 1000) {
   }
 }
 
-/**
- * Debounce function
- */
 export function debounce(func, wait) {
   let timeout;
   return function executedFunction(...args) {
@@ -151,9 +109,6 @@ export function debounce(func, wait) {
   };
 }
 
-/**
- * Throttle function
- */
 export function throttle(func, limit) {
   let inThrottle;
   return function (...args) {
@@ -163,4 +118,50 @@ export function throttle(func, limit) {
       setTimeout(() => (inThrottle = false), limit);
     }
   };
+}
+
+/**
+ * Parse narrative content into structured items with titles and descriptions
+ * Handles both bullet points (- **Title:** description) and numbered format (1. **Title:** description)
+ */
+export function parseNarrativeContent(content) {
+  if (!content || typeof content !== "string") {
+    return [];
+  }
+
+  const items = [];
+  
+  // Split by bullet points with optional leading spaces
+  // Pattern: \n followed by optional spaces, then - or number
+  const parts = content.split(/\n\s*(?=[-•]|\d+\.)/);
+
+  parts.forEach((part) => {
+    const trimmed = part.trim();
+    if (!trimmed) return;
+
+    // Remove leading bullet or number
+    const cleaned = trimmed.replace(/^([-•]|\d+\.)\s*/, "").trim();
+
+    // Extract title from **Title:** pattern
+    // Title is bold text followed by colon, rest is description
+    const titleMatch = cleaned.match(/^\*\*([^*]+)\*\*:\s*([\s\S]*)$/);
+
+    if (titleMatch) {
+      const title = titleMatch[1].trim();
+      const description = titleMatch[2].trim();
+      
+      items.push({
+        title,
+        description,
+      });
+    } else if (cleaned) {
+      // If no title pattern found, treat entire part as description
+      items.push({
+        title: null,
+        description: cleaned,
+      });
+    }
+  });
+
+  return items;
 }

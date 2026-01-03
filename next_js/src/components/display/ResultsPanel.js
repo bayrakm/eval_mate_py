@@ -4,6 +4,7 @@ import { Paper, Stack, Title, Text, Divider, Center, Box } from "@mantine/core";
 import { IconClipboardCheck } from "@tabler/icons-react";
 import { ScoreCard } from "./ScoreCard";
 import { formatScore } from "../../lib/utils";
+import { NarrativeSection } from "./NarrativeSection";
 
 export function ResultsPanel({ result, selectedRubric }) {
   if (!result) {
@@ -57,9 +58,7 @@ export function ResultsPanel({ result, selectedRubric }) {
               >
                 📋 Evaluation
               </Text>
-              <Text size="sm" style={{ lineHeight: 1.6, textAlign: "justify" }}>
-                {result.narrative_evaluation}
-              </Text>
+              <NarrativeSection content={result.narrative_evaluation} />
             </Box>
           )}
 
@@ -77,12 +76,7 @@ export function ResultsPanel({ result, selectedRubric }) {
                 >
                   ✅ Strengths
                 </Text>
-                <Text
-                  size="sm"
-                  style={{ lineHeight: 1.6, textAlign: "justify" }}
-                >
-                  {result.narrative_strengths}
-                </Text>
+                <NarrativeSection content={result.narrative_strengths} />
               </Box>
             </>
           )}
@@ -101,12 +95,7 @@ export function ResultsPanel({ result, selectedRubric }) {
                 >
                   ⚠️ Gaps & Areas for Improvement
                 </Text>
-                <Text
-                  size="sm"
-                  style={{ lineHeight: 1.6, textAlign: "justify" }}
-                >
-                  {result.narrative_gaps}
-                </Text>
+                <NarrativeSection content={result.narrative_gaps} />
               </Box>
             </>
           )}
@@ -125,12 +114,7 @@ export function ResultsPanel({ result, selectedRubric }) {
                 >
                   💡 Guidance for Improvement
                 </Text>
-                <Text
-                  size="sm"
-                  style={{ lineHeight: 1.6, textAlign: "justify" }}
-                >
-                  {result.narrative_guidance}
-                </Text>
+                <NarrativeSection content={result.narrative_guidance} />
               </Box>
             </>
           )}
