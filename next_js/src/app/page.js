@@ -26,8 +26,7 @@ import { ProgressIndicator } from "../components/display/ProgressIndicator";
 import { ProtectedRoute } from "../components/auth/ProtectedRoute";
 import * as api from "../lib/apiClient";
 import { LOADING_STATES } from "../lib/constants";
-import { signOut, useSession } from "next-auth/react";
-import { IconLogout } from "@tabler/icons-react";
+import { useSession } from "next-auth/react";
 
 export default function HomePage() {
   const {
@@ -555,17 +554,8 @@ export default function HomePage() {
                   </div>
                   <Stack gap={4} align="flex-end">
                     <Text size="xs" c="dimmed">
-                      {session?.user?.email || "demo@example.com"}
+                      {session?.user?.email || "user@example.com"}
                     </Text>
-                    <Button
-                      size="xs"
-                      variant="light"
-                      color="orange"
-                      leftSection={<IconLogout size={14} />}
-                      onClick={() => signOut({ callbackUrl: "/login" })}
-                    >
-                      Sign Out
-                    </Button>
                   </Stack>
                 </Group>
 
@@ -667,7 +657,7 @@ export default function HomePage() {
             >
               <Group gap="xs" mb="md">
                 <Text size="sm" fw={600}>
-                  Messages
+                  Activity Log
                 </Text>
               </Group>
               <MessageList messages={state.messages} />

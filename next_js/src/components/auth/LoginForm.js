@@ -30,22 +30,35 @@ function LoginFormContent() {
     setError("");
     setLoading(true);
 
-    const response = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-      callbackUrl,
-    });
-
-    setLoading(false);
-
-    if (response?.error) {
-      setError("Incorrect email or password. Use demo@example.com / demo123.");
+    if (!email || !password) {
+      setError("Email and password are required");
+      setLoading(false);
       return;
     }
 
-    router.push(response?.url || callbackUrl);
-    router.refresh();
+    try {
+      const response = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+        callbackUrl,
+      });
+
+      if (response?.error) {
+        setError("Incorrect email or password.");
+        return;
+      }
+
+      if (response?.ok) {
+        router.push(response?.url || callbackUrl);
+        router.refresh();
+      }
+    } catch (err) {
+      setError("An error occurred during login");
+      console.error("Login error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -54,7 +67,7 @@ function LoginFormContent() {
         <div>
           <Title order={2}>Sign in to EvalMate</Title>
           <Text c="dimmed" size="sm">
-            Use demo credentials to try the app.
+            Enter your email and password.
           </Text>
         </div>
 
@@ -72,7 +85,7 @@ function LoginFormContent() {
           <Stack>
             <TextInput
               label="Email"
-              placeholder="demo@example.com"
+              placeholder="email@example.com"
               required
               value={email}
               onChange={(event) => setEmail(event.currentTarget.value)}
@@ -83,7 +96,7 @@ function LoginFormContent() {
 
             <PasswordInput
               label="Password"
-              placeholder="demo123"
+              placeholder="Enter your password"
               required
               value={password}
               onChange={(event) => setPassword(event.currentTarget.value)}

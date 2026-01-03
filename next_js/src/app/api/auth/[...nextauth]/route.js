@@ -1,5 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { prisma } from "@/lib/prisma";
+import { compare } from "bcryptjs";
 
 const handler = NextAuth({
   providers: [
@@ -9,7 +11,6 @@ const handler = NextAuth({
         email: {
           label: "Email",
           type: "email",
-          placeholder: "demo@example.com",
         },
         password: { label: "Password", type: "password" },
       },
@@ -18,22 +19,30 @@ const handler = NextAuth({
           return null;
         }
 
-        const demoEmail = process.env.NEXTAUTH_DEMO_EMAIL || "demo@example.com";
-        const demoPassword = process.env.NEXTAUTH_DEMO_PASSWORD || "demo123";
+        try {
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email.toLowerCase() },
+          });
 
-        if (
-          credentials.email.toLowerCase() === demoEmail.toLowerCase() &&
-          credentials.password === demoPassword
-        ) {
+          if (!user) return null;
+
+          const isPasswordValid = await compare(
+            credentials.password,
+            user.password
+          );
+
+          if (!isPasswordValid) return null;
+
           return {
-            id: "demo-user",
-            name: "Demo User",
-            email: demoEmail,
-            role: "demo",
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role || "user",
           };
+        } catch (error) {
+          console.error("Auth error:", error);
+          return null;
         }
-
-        return null;
       },
     }),
   ],
@@ -51,14 +60,16 @@ const handler = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.user = user;
+        token.id = user.id;
+        token.name = user.name;
+        token.email = user.email;
+        token.role = user.role;
       }
       return token;
     },
     async session({ session, token }) {
-      if (token?.user) {
-        session.user = token.user;
-      }
+      session.user.id = token.id;
+      session.user.role = token.role;
       return session;
     },
   },

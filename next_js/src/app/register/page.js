@@ -2,22 +2,14 @@
 
 import { Center, Container, Text } from "@mantine/core";
 import Link from "next/link";
-import { LoginForm } from "../../components/auth/LoginForm";
+import { RegisterForm } from "../../components/auth/RegisterForm";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   return (
     <Container size="xs" py="xl" style={{ minHeight: "100vh" }}>
       <Center style={{ minHeight: "80vh" }}>
         <div style={{ width: "100%" }}>
-          <LoginForm />
-          <Text size="xs" mt="xs" ta="center">
-            Don&apos;t have an account?{" "}
-            <Link href="/register">
-              <Text component="span" c="orange.7" inherit>
-                Sign up here
-              </Text>
-            </Link>
-          </Text>
+          <RegisterForm />
           <Text size="xs" mt="xs" ta="center">
             <Link href="/">
               <Text component="span" c="orange.7" inherit>
