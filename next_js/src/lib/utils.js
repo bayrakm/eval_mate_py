@@ -10,7 +10,7 @@ export function formatDate(date) {
   if (typeof date === "string") {
     date = new Date(date);
   }
-  return new Intl.DateTimeFormat("id-ID", {
+  return new Intl.DateTimeFormat("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
