@@ -47,6 +47,7 @@ class ChatMessageResponse(BaseModel):
 
 class ChatSessionResponse(BaseModel):
     """Response containing session information."""
+    session_id: str = Field(description="Session ID for future requests")
     eval_id: str
     question_id: str
     rubric_id: str
@@ -102,6 +103,7 @@ async def create_chat_session(request: ChatSessionCreate):
         logger.info(f"Created chat session {session_id} for eval {request.eval_id}")
         
         return ChatSessionResponse(
+            session_id=session_id,
             eval_id=session.eval_id,
             question_id=session.question_id,
             rubric_id=session.rubric_id,

@@ -150,7 +150,7 @@ class ChatService:
         Build comprehensive system prompt with evaluation context.
         
         Args:
-            eval_id: Evaluation ID
+            eval_id: Evaluation ID (or submission_id for lookup)
             question_id: Question ID
             rubric_id: Rubric ID
             submission_id: Submission ID

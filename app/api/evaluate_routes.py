@@ -18,26 +18,29 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/evaluate", tags=["Evaluation"])
 
 
-@router.post("/", response_model=EvalResult)
+@router.post("/", response_model=dict)
 def evaluate(
     rubric_id: str = Query(..., description="ID of the rubric to evaluate against"),
     question_id: str = Query(..., description="ID of the assignment question"),
     submission_id: str = Query(..., description="ID of the student submission")
-) -> EvalResult:
+) -> dict:
     """
     Evaluate a student submission against a rubric using LLM (Narrative Format).
     
     This endpoint triggers the evaluation pipeline using narrative feedback:
     1. Builds fusion context from rubric, question, and submission
     2. Runs LLM evaluation with narrative format (no per-item scores)
-    3. Returns comprehensive paragraph-style feedback
+    3. Returns comprehensive paragraph-style feedback with eval_id
     
-    Returns EvalResult with narrative_evaluation, narrative_strengths, narrative_gaps, and narrative_guidance.
+    Returns dict with eval_id and result containing narrative_evaluation, narrative_strengths, narrative_gaps, and narrative_guidance.
     """
     try:
         logger.info(f"API evaluation request: rubric={rubric_id}, question={question_id}, submission={submission_id}")
-        result = evaluate_submission_narrative(rubric_id, question_id, submission_id)
-        return result
+        eval_id, result = evaluate_submission_narrative(rubric_id, question_id, submission_id)
+        return {
+            "eval_id": eval_id,
+            "result": result.model_dump()
+        }
     except Exception as e:
         logger.error(f"Evaluation failed: {e}")
         raise HTTPException(status_code=500, detail=f"Evaluation failed: {str(e)}")

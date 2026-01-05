@@ -9,6 +9,7 @@ export function useAppState() {
     selectedSubmission: null,
     fusion: null,
     result: null,
+    evalId: null,
     messages: [],
     loading: "idle",
     progress: null,
@@ -48,6 +49,7 @@ export function useAppState() {
       selectedSubmission: null,
       fusion: null,
       result: null,
+      evalId: null,
     }));
   }, []);
 

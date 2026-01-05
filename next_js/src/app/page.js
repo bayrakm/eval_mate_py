@@ -12,8 +12,10 @@ import {
   Group,
   Badge,
   Button,
+  Modal,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
+import { IconMessage } from "@tabler/icons-react";
 import { useAppState } from "../hooks/useAppState";
 import { AppLayout } from "../components/layout/AppLayout";
 import { UploadRubric } from "../components/upload/UploadRubric";
@@ -24,11 +26,14 @@ import { MessageList } from "../components/display/MessageList";
 import { ResultsPanel } from "../components/display/ResultsPanel";
 import { ProgressIndicator } from "../components/display/ProgressIndicator";
 import { ProtectedRoute } from "../components/auth/ProtectedRoute";
+import ChatInterface from "../components/chat/ChatInterface";
 import * as api from "../lib/apiClient";
 import { LOADING_STATES } from "../lib/constants";
 import { useSession } from "next-auth/react";
 
 export default function HomePage() {
+  const [showChatModal, setShowChatModal] = useState(false);
+
   const {
     state,
     setState,
@@ -49,6 +54,7 @@ export default function HomePage() {
       selectedSubmission: null,
       fusion: null,
       result: null,
+      evalId: null,
       messages: [],
       loading: "idle",
       progress: null,
@@ -469,15 +475,21 @@ export default function HomePage() {
           state.selectedSubmission.id
         ));
 
-      const result = (await api.evaluate(
+      const evaluationResponse = (await api.evaluate(
         state.selectedRubric.id,
         state.selectedQuestion.id,
         state.selectedSubmission.id
       )) || {
-        total: 0,
-        items: [],
-        overall_feedback: "Evaluation completed",
+        eval_id: null,
+        result: {
+          total: 0,
+          items: [],
+          overall_feedback: "Evaluation completed",
+        },
       };
+
+      const evalId = evaluationResponse.eval_id;
+      const result = evaluationResponse.result;
 
       if (progressInterval) {
         clearInterval(progressInterval);
@@ -492,6 +504,7 @@ export default function HomePage() {
       setState((prev) => ({
         ...prev,
         result,
+        evalId,
       }));
 
       setTimeout(() => clearProgress(), 500);
@@ -665,6 +678,7 @@ export default function HomePage() {
                     <ResultsPanel
                       result={state.result}
                       selectedRubric={state.selectedRubric}
+                      onOpenChat={() => setShowChatModal(true)}
                     />
                   </div>
                 </Stack>
@@ -684,6 +698,31 @@ export default function HomePage() {
             </Grid.Col>
           </Grid>
         </Container>
+
+        <Modal
+          opened={showChatModal}
+          onClose={() => setShowChatModal(false)}
+          title="Chat About Your Evaluation"
+          size="lg"
+          centered
+          styles={{
+            content: { maxHeight: "80vh" },
+          }}
+        >
+          <ChatInterface
+            evalData={
+              state.result && state.evalId
+                ? {
+                    eval_id: state.evalId,
+                    rubric_id: state.selectedRubric?.id,
+                    question_id: state.selectedQuestion?.id,
+                    submission_id: state.selectedSubmission?.id,
+                  }
+                : null
+            }
+            onClose={() => setShowChatModal(false)}
+          />
+        </Modal>
       </AppLayout>
     </ProtectedRoute>
   );

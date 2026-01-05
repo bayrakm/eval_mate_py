@@ -1,12 +1,22 @@
 "use client";
 
-import { Paper, Stack, Title, Text, Divider, Center, Box } from "@mantine/core";
-import { IconClipboardCheck } from "@tabler/icons-react";
+import {
+  Paper,
+  Stack,
+  Title,
+  Text,
+  Divider,
+  Center,
+  Box,
+  Button,
+  Group,
+} from "@mantine/core";
+import { IconClipboardCheck, IconMessage } from "@tabler/icons-react";
 import { ScoreCard } from "./ScoreCard";
 import { formatScore } from "../../lib/utils";
 import { NarrativeSection } from "./NarrativeSection";
 
-export function ResultsPanel({ result, selectedRubric }) {
+export function ResultsPanel({ result, selectedRubric, onOpenChat }) {
   if (!result) {
     return (
       <Paper
@@ -46,6 +56,20 @@ export function ResultsPanel({ result, selectedRubric }) {
         }}
       >
         <Stack gap="md">
+          <Group justify="space-between" align="center">
+            <Title order={3}>Evaluation Results</Title>
+            {onOpenChat && (
+              <Button
+                leftSection={<IconMessage size={18} />}
+                variant="light"
+                size="sm"
+                onClick={onOpenChat}
+              >
+                Ask Questions
+              </Button>
+            )}
+          </Group>
+
           {result.narrative_evaluation && (
             <Box>
               <Text
@@ -137,6 +161,20 @@ export function ResultsPanel({ result, selectedRubric }) {
       }}
     >
       <Stack gap="md">
+        <Group justify="space-between" align="center">
+          <Title order={3}>Evaluation Results</Title>
+          {onOpenChat && (
+            <Button
+              leftSection={<IconMessage size={18} />}
+              variant="light"
+              size="sm"
+              onClick={onOpenChat}
+            >
+              Ask Questions
+            </Button>
+          )}
+        </Group>
+
         <div>
           <Text size="xs" c="dimmed" tt="uppercase" fw={600} mb="xs">
             Total Score

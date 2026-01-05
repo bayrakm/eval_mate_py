@@ -485,7 +485,7 @@ def evaluate_submission(rubric_id: str, question_id: str, submission_id: str) ->
     return result
 
 
-def evaluate_submission_narrative(rubric_id: str, question_id: str, submission_id: str) -> EvalResult:
+def evaluate_submission_narrative(rubric_id: str, question_id: str, submission_id: str) -> tuple[str, EvalResult]:
     """
     Build fusion context and run LLM to evaluate using narrative feedback format.
     Returns EvalResult with comprehensive paragraph-style feedback (no scores).
@@ -496,7 +496,7 @@ def evaluate_submission_narrative(rubric_id: str, question_id: str, submission_i
         submission_id: ID of the student submission
         
     Returns:
-        EvalResult with narrative_evaluation, narrative_strengths, narrative_gaps, narrative_guidance fields
+        tuple[str, EvalResult]: (eval_id, EvalResult) - The evaluation ID and result with narrative fields
     """
     logger.info(f"Starting narrative evaluation: rubric={rubric_id}, question={question_id}, submission={submission_id}")
     
@@ -603,7 +603,7 @@ def evaluate_submission_narrative(rubric_id: str, question_id: str, submission_i
     validate_ids(result)
 
     # Persist the result
-    repo.save_eval_result(result)
-    logger.info(f"Saved narrative EvalResult for submission {submission_id}")
+    eval_id = repo.save_eval_result(result)
+    logger.info(f"Saved narrative EvalResult for submission {submission_id} with eval_id {eval_id}")
     
-    return result
+    return eval_id, result
