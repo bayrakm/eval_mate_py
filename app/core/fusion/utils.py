@@ -124,7 +124,7 @@ def format_rubric_items(rubric_items: list) -> str:
         desc = item.get('desc', '')
         weight = item.get('weight', 0)
         
-        item_text = f"• {title}"
+        item_text = f"- {title}"
         if weight:
             item_text += f" (Weight: {weight})"
         if desc:

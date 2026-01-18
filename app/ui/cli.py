@@ -12,7 +12,11 @@ from rich.console import Console
 from rich.table import Table
 
 from app.core.io.ingest import detect_file_type, ingest_docx, ingest_image, ingest_pdf
-from app.core.io.rubric_parser import ParseConfig, parse_rubric_to_items
+from app.core.io.rubric_extractor import (
+    extract_rubric_structured,
+    rubric_items_from_extraction,
+    save_rubric_json
+)
 from app.core.models.ids import is_valid_id, new_question_id, new_rubric_id, new_submission_id
 from app.core.models.schemas import Question, Rubric, Submission
 from app.core.store.repo import get_repository
@@ -91,15 +95,22 @@ def upload_rubric(
         
         console.print(f"Ingested document with [green]{len(canonical_doc.blocks)}[/green] blocks")
         
-        # Parse rubric items
-        parse_config = ParseConfig(prefer_tables=prefer_tables)
-        rubric_items = parse_rubric_to_items(canonical_doc, parse_config)
+        # Parse rubric items via ADE
+        rubric_data = extract_rubric_structured(str(file))
+        rubric_items = rubric_items_from_extraction(rubric_data)
         
         if not rubric_items:
             console.print("[red]No rubric items could be parsed from the document[/red]")
             sys.exit(1)
         
         console.print(f"Parsed [green]{len(rubric_items)}[/green] rubric items")
+
+        # Save extracted rubric JSON for reuse
+        try:
+            saved_path = save_rubric_json(rubric_data)
+            console.print(f"Saved rubric extraction JSON to: {saved_path}")
+        except Exception as e:
+            console.print(f"[yellow]Failed to save rubric extraction JSON: {e}[/yellow]")
         
         # Determine metadata
         metadata = {
@@ -111,7 +122,7 @@ def upload_rubric(
         # Infer missing metadata from filename
         if not metadata["course"] or not metadata["assignment"]:
             inferred = infer_metadata_from_filename(file.name)
-            metadata["course"] = metadata["course"] or inferred["course"]
+            metadata["course"] = metadata["course"] or rubric_data.get("course") or inferred["course"]
             metadata["assignment"] = metadata["assignment"] or inferred["assignment"]
         
         # Create rubric
@@ -128,7 +139,7 @@ def upload_rubric(
         repo = get_repository()
         repo.save_rubric(rubric)
         
-        console.print(f"✅ Saved rubric with ID: [green]{rubric.id}[/green]")
+        console.print(f"Saved rubric with ID: [green]{rubric.id}[/green]")
         console.print(f"   Course: {rubric.course}")
         console.print(f"   Assignment: {rubric.assignment}")
         console.print(f"   Version: {rubric.version}")
@@ -257,7 +268,7 @@ def upload_question(
         # Save to repository
         repo.save_question(question)
         
-        console.print(f"✅ Saved question with ID: [green]{question.id}[/green]")
+        console.print(f"Saved question with ID: [green]{question.id}[/green]")
         console.print(f"   Title: {question.title}")
         console.print(f"   Rubric: {rubric_id}")
         
@@ -396,7 +407,7 @@ def upload_submission(
         # Save to repository
         repo.save_submission(submission)
         
-        console.print(f"✅ Saved submission with ID: [green]{submission.id}[/green]")
+        console.print(f"Saved submission with ID: [green]{submission.id}[/green]")
         console.print(f"   Student: {submission.student_handle}")
         console.print(f"   Rubric: {rubric_id}")
         console.print(f"   Question: {question_id}")

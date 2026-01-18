@@ -98,6 +98,7 @@ app/data/rubrics/*
 app/data/submissions/*
 !app/data/submissions/.gitkeep
 app/data/db.sqlite3
+Sample Document Extraction
 
 # ============================================
 # IDE and Editor Files

@@ -22,33 +22,33 @@ def main():
     This function sets up the necessary directories and database
     to prepare the application for use.
     """
-    print("🚀 Initializing EvalMate...")
+    print("Initializing EvalMate...")
     print("=" * 50)
     
     try:
         # Ensure all data directories exist
-        print("📁 Setting up data directories...")
+        print("Setting up data directories...")
         ensure_directories_exist()
         
         # Initialize SQLite database
-        print("🗄️  Initializing database...")
+        print("Initializing database...")
         init_db()
         
         # Display configuration summary
         config = get_config()
-        print("\n📋 Configuration Summary:")
+        print("\nConfiguration Summary:")
         print(f"   Storage Mode: {STORAGE_MODE}")
         print(f"   Data Directory: {config['data_dir']}")
         print(f"   Database Path: {config['database_path']}")
-        
-        print("\n✅ Project initialized successfully!")
+
+        print("\nProject initialized successfully!")
         print("   Data folders and SQLite database are ready.")
         print("   You can now start building your evaluation system.")
-        
+
         return True
         
     except Exception as e:
-        print(f"\n❌ Initialization failed: {e}")
+        print(f"\nInitialization failed: {e}")
         return False
 
 
@@ -61,7 +61,7 @@ def verify_setup():
     """
     from config import DATA_DIR, DATABASE_PATH, DIRECTORIES
     
-    print("\n🔍 Verifying setup...")
+    print("\nVerifying setup...")
     
     # Check if data directories exist
     missing_dirs = []
@@ -70,15 +70,15 @@ def verify_setup():
             missing_dirs.append(f"{name} ({path})")
     
     if missing_dirs:
-        print(f"❌ Missing directories: {', '.join(missing_dirs)}")
+        print(f"Missing directories: {', '.join(missing_dirs)}")
         return False
     
     # Check if database exists
     if not DATABASE_PATH.exists():
-        print(f"❌ Database not found: {DATABASE_PATH}")
+        print(f"Database not found: {DATABASE_PATH}")
         return False
     
-    print("✅ Setup verification passed!")
+    print("Setup verification passed!")
     return True
 
 
@@ -154,11 +154,11 @@ def test_repository():
         assert retrieved.course == rubric.course, "Retrieved rubric has wrong course"
         assert len(retrieved.items) == len(rubric.items), "Retrieved rubric has wrong number of items"
         
-        print("   ✅ All repository operations successful!")
+        print("   All repository operations successful!")
         return True
         
     except Exception as e:
-        print(f"   ❌ Repository test failed: {e}")
+        print(f"   Repository test failed: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -173,20 +173,20 @@ if __name__ == "__main__":
         verify_setup()
         
         # Run repository smoke test
-        print("\n🧪 Running repository smoke test...")
+        print("\nRunning repository smoke test...")
         test_success = test_repository()
         
         if test_success:
-            print("✅ Repository smoke test passed!")
+            print("Repository smoke test passed!")
         else:
-            print("❌ Repository smoke test failed!")
+            print("Repository smoke test failed!")
             
-        print("\n🎯 Next Steps:")
+        print("\nNext Steps:")
         print("   1. Review the project structure")
         print("   2. Run tests: python -m pytest app/tests/")
         print("   3. Start implementing business logic")
         print("   4. Add your first rubric and questions")
         
     else:
-        print("\n💡 Please fix the errors above and try again.")
+        print("\nPlease fix the errors above and try again.")
         sys.exit(1)

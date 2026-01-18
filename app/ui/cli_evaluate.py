@@ -54,7 +54,7 @@ def run_eval(
         with console.status("[bold green]Evaluating submission..."):
             result = evaluate_submission(rubric_id, question_id, submission_id)
         
-        console.print("[bold green]✅ Evaluation Complete![/bold green]")
+        console.print("[bold green]Evaluation Complete![/bold green]")
         
         if pretty:
             # Display formatted results
@@ -64,7 +64,7 @@ def run_eval(
             typer.echo(result.model_dump_json())
             
     except Exception as e:
-        console.print(f"[bold red]❌ Evaluation Failed:[/bold red] {e}")
+        console.print(f"[bold red]Evaluation Failed:[/bold red] {e}")
         if verbose:
             console.print_exception()
         sys.exit(1)
@@ -74,18 +74,18 @@ def run_eval(
 def check_status(
     submission_id: str = typer.Option(..., "--submission-id", "-s", help="ID of the submission to check")
 ):
-    """Check if a submission has been evaluated."""
+            console.print(f"[green]Submission {submission_id} has been evaluated[/green]")
     try:
         result = repo.get_eval_result(submission_id)
         if result:
-            console.print(f"[green]✅ Submission {submission_id} has been evaluated[/green]")
+            console.print(f"[green]Submission {submission_id} has been evaluated[/green]")
             console.print(f"Total Score: [bold]{result.total}[/bold]")
             console.print(f"Evaluated: {result.metadata.get('evaluated_at', 'Unknown')}")
             console.print(f"Model: {result.metadata.get('model', 'Unknown')}")
         else:
-            console.print(f"[yellow]⏳ Submission {submission_id} has not been evaluated[/yellow]")
+            console.print(f"[yellow]Submission {submission_id} has not been evaluated[/yellow]")
     except Exception as e:
-        console.print(f"[red]❌ Error checking status: {e}[/red]")
+        console.print(f"[red]Error checking status: {e}[/red]")
         sys.exit(1)
 
 
@@ -107,7 +107,7 @@ def show_result(
             display_evaluation_result(result)
             
     except Exception as e:
-        console.print(f"[red]❌ Error retrieving result: {e}[/red]")
+        console.print(f"[red]Error retrieving result: {e}[/red]")
         sys.exit(1)
 
 

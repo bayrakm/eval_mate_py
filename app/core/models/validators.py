@@ -41,7 +41,7 @@ def validate_weights_sum(rubric: Rubric, *, tol: float = 0.01) -> None:
     
     if abs(total_weight - 1.0) > tol:
         raise ValueError(
-            f"Rubric weights sum to {total_weight:.6f}, expected 1.0 ± {tol}. "
+            f"Rubric weights sum to {total_weight:.6f}, expected 1.0 +/- {tol}. "
             f"Difference: {abs(total_weight - 1.0):.6f}"
         )
 

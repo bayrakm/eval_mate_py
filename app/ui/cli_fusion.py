@@ -50,7 +50,7 @@ def build(
         
         fusion = build_fusion_context(rubric_id, question_id, submission_id)
         
-        console.print(f"[green]✓ Fusion context created: {fusion.id}[/green]")
+        console.print(f"[green]OK Fusion context created: {fusion.id}[/green]")
         console.print(f"  Token estimate: {fusion.token_estimate}")
         console.print(f"  Visual count: {fusion.visual_count}")
         console.print(f"  Text blocks: {fusion.text_block_count}")
@@ -64,13 +64,13 @@ def build(
                     console.print(f"  {key}: {value}")
         
     except KeyError as e:
-        console.print(f"[red]✗ Entity not found: {e}[/red]")
+        console.print(f"[red]FAIL Entity not found: {e}[/red]")
         raise typer.Exit(1)
     except ValueError as e:
-        console.print(f"[red]✗ Validation error: {e}[/red]")
+        console.print(f"[red]FAIL Validation error: {e}[/red]")
         raise typer.Exit(1)
     except Exception as e:
-        console.print(f"[red]✗ Failed to build fusion context: {e}[/red]")
+        console.print(f"[red]FAIL Failed to build fusion context: {e}[/red]")
         raise typer.Exit(1)
 
 
@@ -141,7 +141,7 @@ def list_contexts(
         console.print(f"\n[dim]Total: {len(contexts)} contexts[/dim]")
         
     except Exception as e:
-        console.print(f"[red]✗ Failed to list fusion contexts: {e}[/red]")
+        console.print(f"[red]FAIL Failed to list fusion contexts: {e}[/red]")
         raise typer.Exit(1)
 
 
@@ -212,7 +212,7 @@ def view(
             # Save to file
             with open(output, "w", encoding="utf-8") as f:
                 f.write(content)
-            console.print(f"[green]✓ Saved to {output}[/green]")
+            console.print(f"[green]OK Saved to {output}[/green]")
         else:
             # Print to console
             if format == "json" or format == "summary":
@@ -221,10 +221,10 @@ def view(
                 console.print(content)
     
     except FileNotFoundError:
-        console.print(f"[red]✗ Fusion context not found: {fusion_id}[/red]")
+        console.print(f"[red]FAIL Fusion context not found: {fusion_id}[/red]")
         raise typer.Exit(1)
     except Exception as e:
-        console.print(f"[red]✗ Failed to view fusion context: {e}[/red]")
+        console.print(f"[red]FAIL Failed to view fusion context: {e}[/red]")
         raise typer.Exit(1)
 
 
@@ -244,21 +244,21 @@ def validate(
         
         # Display validation status
         if result["valid"]:
-            console.print(f"[green]✓ Fusion context {fusion_id} is valid[/green]")
+            console.print(f"[green]OK Fusion context {fusion_id} is valid[/green]")
         else:
-            console.print(f"[red]✗ Fusion context {fusion_id} has validation errors[/red]")
+            console.print(f"[red]FAIL Fusion context {fusion_id} has validation errors[/red]")
         
         # Show errors
         if result["errors"]:
             console.print("\n[red]Errors:[/red]")
             for error in result["errors"]:
-                console.print(f"  • {error}")
+                console.print(f"  - {error}")
         
         # Show warnings
         if result["warnings"]:
             console.print("\n[yellow]Warnings:[/yellow]")
             for warning in result["warnings"]:
-                console.print(f"  • {warning}")
+                console.print(f"  - {warning}")
         
         # Show summary if verbose
         if verbose and result["summary"]:
@@ -273,7 +273,7 @@ def validate(
             raise typer.Exit(1)
     
     except Exception as e:
-        console.print(f"[red]✗ Validation failed: {e}[/red]")
+        console.print(f"[red]FAIL Validation failed: {e}[/red]")
         raise typer.Exit(1)
 
 
@@ -291,19 +291,19 @@ def delete(
         fusion_path = f"data/fusion/{fusion_id}.json"
         
         if not os.path.exists(fusion_path):
-            console.print(f"[red]✗ Fusion context not found: {fusion_id}[/red]")
+            console.print(f"[red]FAIL Fusion context not found: {fusion_id}[/red]")
             raise typer.Exit(1)
         
         if not force:
-            if not typer.confirm(f"Delete fusion context {fusion_id}?"):
+            if not typer.confirm(f"Delete fusion context {fusion_id}OK"):
                 console.print("[yellow]Cancelled.[/yellow]")
                 raise typer.Exit(0)
         
         os.remove(fusion_path)
-        console.print(f"[green]✓ Deleted fusion context: {fusion_id}[/green]")
+        console.print(f"[green]OK Deleted fusion context: {fusion_id}[/green]")
     
     except Exception as e:
-        console.print(f"[red]✗ Failed to delete fusion context: {e}[/red]")
+        console.print(f"[red]FAIL Failed to delete fusion context: {e}[/red]")
         raise typer.Exit(1)
 
 
@@ -345,7 +345,7 @@ def stats():
             f"Total Tokens: [yellow]{total_tokens:,}[/yellow]\n"
             f"Total Visuals: [blue]{total_visuals}[/blue]\n"
             f"Average Tokens: [yellow]{total_tokens // max(len(valid_contexts), 1):,}[/yellow]",
-            title="📊 Statistics"
+            title="Stats Statistics"
         ))
         
         if rubric_counts:
@@ -354,7 +354,7 @@ def stats():
                 console.print(f"  {rubric_id}: {count}")
     
     except Exception as e:
-        console.print(f"[red]✗ Failed to calculate statistics: {e}[/red]")
+        console.print(f"[red]FAIL Failed to calculate statistics: {e}[/red]")
         raise typer.Exit(1)
 
 
@@ -368,10 +368,10 @@ def init():
     try:
         fusion_dir = "data/fusion"
         os.makedirs(fusion_dir, exist_ok=True)
-        console.print(f"[green]✓ Fusion storage directory ready: {fusion_dir}[/green]")
+        console.print(f"[green]OK Fusion storage directory ready: {fusion_dir}[/green]")
     
     except Exception as e:
-        console.print(f"[red]✗ Failed to initialize storage: {e}[/red]")
+        console.print(f"[red]FAIL Failed to initialize storage: {e}[/red]")
         raise typer.Exit(1)
 
 

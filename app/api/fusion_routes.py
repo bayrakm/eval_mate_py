@@ -253,7 +253,7 @@ async def get_fusion_text_content(fusion_id: str):
             "full_text_content": fusion.get_text_content(),
             "visual_captions": "\n".join([v.caption for v in fusion.submission_visuals]),
             "rubric_summary": "\n".join([
-                f"• {item.get('title', 'Untitled')}: {item.get('desc', 'No description')}"
+                f"- {item.get('title', 'Untitled')}: {item.get('desc', 'No description')}"
                 for item in fusion.rubric_items
             ])
         }

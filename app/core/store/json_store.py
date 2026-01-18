@@ -38,9 +38,9 @@ def save_json(data: Dict[str, Any], file_path: Union[str, Path]) -> None:
     try:
         with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, ensure_ascii=False, default=str)
-        print(f"✅ JSON saved to: {file_path}")
+        print(f"JSON saved to: {file_path}")
     except (OSError, TypeError) as e:
-        print(f"❌ Error saving JSON to {file_path}: {e}")
+        print(f"Error saving JSON to {file_path}: {e}")
         raise
 
 
@@ -70,13 +70,13 @@ def load_json(file_path: Union[str, Path]) -> Dict[str, Any]:
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
-        print(f"✅ JSON loaded from: {file_path}")
+        print(f"JSON loaded from: {file_path}")
         return data
     except json.JSONDecodeError as e:
-        print(f"❌ Invalid JSON in {file_path}: {e}")
+        print(f"Invalid JSON in {file_path}: {e}")
         raise
     except OSError as e:
-        print(f"❌ Error reading JSON from {file_path}: {e}")
+        print(f"Error reading JSON from {file_path}: {e}")
         raise
 
 
@@ -97,11 +97,11 @@ def list_json_files(directory_path: Union[str, Path]) -> List[str]:
     directory_path = Path(directory_path)
     
     if not directory_path.exists():
-        print(f"⚠️  Directory not found: {directory_path}")
+        print(f"Directory not found: {directory_path}")
         return []
     
     if not directory_path.is_dir():
-        print(f"⚠️  Path is not a directory: {directory_path}")
+        print(f"Path is not a directory: {directory_path}")
         return []
     
     try:
@@ -112,11 +112,11 @@ def list_json_files(directory_path: Union[str, Path]) -> List[str]:
         ]
         
         json_files.sort()  # Sort alphabetically
-        print(f"📁 Found {len(json_files)} JSON files in: {directory_path}")
+        print(f"Found {len(json_files)} JSON files in: {directory_path}")
         return json_files
         
     except OSError as e:
-        print(f"❌ Error listing directory {directory_path}: {e}")
+        print(f"Error listing directory {directory_path}: {e}")
         return []
 
 
@@ -154,13 +154,13 @@ def delete_json(file_path: Union[str, Path]) -> bool:
     try:
         if file_path.exists():
             file_path.unlink()
-            print(f"🗑️  Deleted JSON file: {file_path}")
+            print(f"Deleted JSON file: {file_path}")
             return True
         else:
-            print(f"⚠️  File not found for deletion: {file_path}")
+            print(f"File not found for deletion: {file_path}")
             return False
     except OSError as e:
-        print(f"❌ Error deleting JSON file {file_path}: {e}")
+        print(f"Error deleting JSON file {file_path}: {e}")
         return False
 
 
@@ -198,7 +198,7 @@ def save_record(category: str, obj_id: str, data: dict) -> None:
         
         # Atomically replace the target file
         os.replace(temp_path, file_path)
-        print(f"✅ Record saved to {category}: {obj_id}")
+        print(f"Record saved to {category}: {obj_id}")
         
     except Exception as e:
         # Clean up temporary file if it exists
@@ -207,7 +207,7 @@ def save_record(category: str, obj_id: str, data: dict) -> None:
                 os.unlink(temp_path)
             except OSError:
                 pass
-        print(f"❌ Error saving record to {category}: {e}")
+        print(f"Error saving record to {category}: {e}")
         raise
 
 
@@ -266,7 +266,7 @@ def list_records(category: str) -> list[str]:
         return record_ids
         
     except OSError as e:
-        print(f"❌ Error listing records in {category}: {e}")
+        print(f"Error listing records in {category}: {e}")
         return []
 
 
