@@ -1,7 +1,8 @@
 "use client";
 
-import { Paper, Stack, Text, FileInput, Group, Badge } from "@mantine/core";
+import { Paper, Stack, Text, FileInput, Group, Badge, Loader } from "@mantine/core";
 import { IconFileText, IconCheck } from "@tabler/icons-react";
+import { useState, useEffect } from "react";
 import { FILE_TYPES } from "../../lib/constants";
 import { ProgressIndicator } from "../display/ProgressIndicator";
 
@@ -11,9 +12,18 @@ export function UploadRubric({
   isCompleted = false,
   progress = null,
 }) {
-  const handleFileChange = (file) => {
-    if (file) {
-      onUpload(file);
+  const [file, setFile] = useState(null);
+
+  useEffect(() => {
+    if (!isCompleted) {
+      setFile(null);
+    }
+  }, [isCompleted]);
+
+  const handleFileChange = (newFile) => {
+    setFile(newFile);
+    if (newFile) {
+      onUpload(newFile);
     }
   };
 
@@ -53,11 +63,17 @@ export function UploadRubric({
           accept={FILE_TYPES.RUBRIC.accept}
           onChange={handleFileChange}
           disabled={loading || isCompleted}
+          value={file}
           size="md"
         />
 
-        {progress && progress.type === "upload" && (
-          <ProgressIndicator progress={progress} />
+        {loading && (
+          <Group mt="xs">
+            <Loader type="dots" color="orange" size="sm" />
+            <Text size="sm" c="dimmed">
+              Uploading rubric file...
+            </Text>
+          </Group>
         )}
       </Stack>
     </Paper>

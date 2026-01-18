@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Paper,
   Stack,
@@ -9,6 +9,7 @@ import {
   TextInput,
   Group,
   Badge,
+  Loader,
 } from "@mantine/core";
 import { IconFileText, IconCheck } from "@tabler/icons-react";
 import { FILE_TYPES } from "../../lib/constants";
@@ -24,12 +25,18 @@ export function UploadQuestion({
   const [title, setTitle] = useState("");
   const [file, setFile] = useState(null);
 
+  useEffect(() => {
+    if (!isCompleted) {
+      setFile(null);
+      setTitle("");
+    }
+  }, [isCompleted]);
+
   const handleFileChange = (newFile) => {
     setFile(newFile);
     if (newFile) {
       onUpload(newFile, title || undefined);
       setTitle("");
-      setFile(null);
     }
   };
 
@@ -81,8 +88,13 @@ export function UploadQuestion({
           size="md"
         />
 
-        {progress && progress.type === "upload" && (
-          <ProgressIndicator progress={progress} />
+        {loading && (
+          <Group mt="xs">
+            <Loader type="dots" color="orange" size="sm" />
+            <Text size="sm" c="dimmed">
+              Uploading question file...
+            </Text>
+          </Group>
         )}
       </Stack>
     </Paper>

@@ -9,6 +9,7 @@ import {
   TextInput,
   Group,
   Badge,
+  Loader,
 } from "@mantine/core";
 import { IconFileText, IconCheck } from "@tabler/icons-react";
 import { FILE_TYPES } from "../../lib/constants";
@@ -29,10 +30,16 @@ export function UploadSubmission({
   const fileInputDisabled = disabled || loading || isCompleted;
 
   useEffect(() => {
+    if (!isCompleted) {
+      setFile(null);
+      setStudentHandle("");
+    }
+  }, [isCompleted]);
+
+  useEffect(() => {
     if (file && studentHandle.trim() && !isCompleted) {
       onUpload(file, studentHandle.trim());
       setStudentHandle("");
-      setFile(null);
     }
   }, [file, studentHandle, onUpload, isCompleted]);
 
@@ -98,8 +105,13 @@ export function UploadSubmission({
           size="md"
         />
 
-        {progress && progress.type === "upload" && (
-          <ProgressIndicator progress={progress} />
+        {loading && (
+          <Group mt="xs">
+            <Loader type="dots" color="orange" size="sm" />
+            <Text size="sm" c="dimmed">
+              Uploading submission file...
+            </Text>
+          </Group>
         )}
       </Stack>
     </Paper>
