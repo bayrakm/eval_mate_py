@@ -69,9 +69,6 @@ export default function HomePage() {
 
   const handleRubricUpload = useCallback(
     async (file) => {
-      const startTime = Date.now();
-      const minDuration = 800;
-
       try {
         setLoading(LOADING_STATES.UPLOADING);
         addMessage(`Uploading rubric: ${file.name}`, "user");
@@ -83,23 +80,14 @@ export default function HomePage() {
           target: "rubric",
         });
 
-        const response = await api.uploadRubric(file, {});
-
-        const elapsed = Date.now() - startTime;
-        if (elapsed < minDuration) {
-          await new Promise((resolve) =>
-            setTimeout(resolve, minDuration - elapsed)
-          );
-        }
-
-        setProgress({
-          type: "upload",
-          value: 100,
-          label: `Upload complete!`,
-          target: "rubric",
+        const response = await api.uploadRubric(file, {}, (progress) => {
+          setProgress({
+            type: "upload",
+            value: progress,
+            label: `Uploading ${file.name}... ${progress}%`,
+            target: "rubric",
+          });
         });
-
-        await new Promise((resolve) => setTimeout(resolve, 300));
 
         const rubric = await api.getRubric(response.meta.id);
 
@@ -151,9 +139,6 @@ export default function HomePage() {
         return;
       }
 
-      const startTime = Date.now();
-      const minDuration = 800;
-
       try {
         setLoading(LOADING_STATES.UPLOADING);
         addMessage(`Uploading question: ${file.name}`, "user");
@@ -168,23 +153,14 @@ export default function HomePage() {
         const response = await api.uploadQuestion(file, {
           rubric_id: state.selectedRubric.id,
           title: title,
+        }, (progress) => {
+          setProgress({
+            type: "upload",
+            value: progress,
+            label: `Uploading ${file.name}... ${progress}%`,
+            target: "question",
+          });
         });
-
-        const elapsed = Date.now() - startTime;
-        if (elapsed < minDuration) {
-          await new Promise((resolve) =>
-            setTimeout(resolve, minDuration - elapsed)
-          );
-        }
-
-        setProgress({
-          type: "upload",
-          value: 100,
-          label: `Upload complete!`,
-          target: "question",
-        });
-
-        await new Promise((resolve) => setTimeout(resolve, 300));
 
         const question = await api.getQuestion(response.meta.id);
 
@@ -238,9 +214,6 @@ export default function HomePage() {
         return;
       }
 
-      const startTime = Date.now();
-      const minDuration = 800;
-
       try {
         setLoading(LOADING_STATES.UPLOADING);
         addMessage(
@@ -259,23 +232,14 @@ export default function HomePage() {
           rubric_id: state.selectedRubric.id,
           question_id: state.selectedQuestion.id,
           student_handle: studentHandle,
+        }, (progress) => {
+          setProgress({
+            type: "upload",
+            value: progress,
+            label: `Uploading ${file.name}... ${progress}%`,
+            target: "submission",
+          });
         });
-
-        const elapsed = Date.now() - startTime;
-        if (elapsed < minDuration) {
-          await new Promise((resolve) =>
-            setTimeout(resolve, minDuration - elapsed)
-          );
-        }
-
-        setProgress({
-          type: "upload",
-          value: 100,
-          label: `Upload complete!`,
-          target: "submission",
-        });
-
-        await new Promise((resolve) => setTimeout(resolve, 300));
 
         const submission = await api.getSubmission(response.meta.id);
 
