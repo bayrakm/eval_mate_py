@@ -27,7 +27,11 @@ from app.api.schemas import (
     SubmissionResponse,
 )
 from app.core.io.ingest import detect_file_type, ingest_docx, ingest_image, ingest_pdf
-from app.core.io.rubric_parser import ParseConfig, parse_rubric_to_items
+from app.core.io.rubric_extractor import (
+    extract_rubric_structured,
+    rubric_items_from_extraction,
+    save_rubric_json
+)
 from app.core.models.ids import is_valid_id, new_question_id, new_rubric_id, new_submission_id
 from app.core.models.schemas import Question, Rubric, Submission
 from app.core.store.repo import get_repository
@@ -155,9 +159,9 @@ async def upload_rubric(
         
         logger.info(f"Ingested document with {len(canonical_doc.blocks)} blocks")
         
-        # Parse rubric items
-        parse_config = ParseConfig(prefer_tables=create_params.prefer_tables)
-        rubric_items = parse_rubric_to_items(canonical_doc, parse_config)
+        # Parse rubric items via ADE
+        rubric_data = extract_rubric_structured(str(file_path))
+        rubric_items = rubric_items_from_extraction(rubric_data)
         
         if not rubric_items:
             # This shouldn't happen with Phase 4 fallbacks, but just in case
@@ -167,6 +171,13 @@ async def upload_rubric(
             )
         
         logger.info(f"Parsed {len(rubric_items)} rubric items")
+
+        # Save extracted rubric JSON for reuse
+        try:
+            saved_path = save_rubric_json(rubric_data)
+            logger.info(f"Saved rubric extraction JSON to: {saved_path}")
+        except Exception as e:
+            logger.warning(f"Failed to save rubric extraction JSON: {e}")
         
         # Determine metadata
         metadata = {}
@@ -179,7 +190,7 @@ async def upload_rubric(
         # Infer missing metadata from filename
         if not metadata.get("course") or not metadata.get("assignment"):
             inferred = infer_metadata_from_filename(file.filename or "unknown")
-            metadata.setdefault("course", inferred["course"])
+            metadata.setdefault("course", rubric_data.get("course") or inferred["course"])
             metadata.setdefault("assignment", inferred["assignment"])
         
         # Create rubric

@@ -278,7 +278,7 @@ def display_evaluation_results(result: EvalResult):
         if result.narrative_evaluation:
             console.print(Panel(
                 result.narrative_evaluation,
-                title="[bold]📋 Evaluation[/bold]",
+                title="[bold]Evaluation[/bold]",
                 border_style="blue",
                 padding=(1, 2)
             ))
@@ -287,7 +287,7 @@ def display_evaluation_results(result: EvalResult):
         if result.narrative_strengths:
             console.print(Panel(
                 result.narrative_strengths,
-                title="[bold]✅ Strengths[/bold]",
+                title="[bold]Strengths[/bold]",
                 border_style="green",
                 padding=(1, 2)
             ))
@@ -296,7 +296,7 @@ def display_evaluation_results(result: EvalResult):
         if result.narrative_gaps:
             console.print(Panel(
                 result.narrative_gaps,
-                title="[bold]⚠️  Gaps & Areas for Improvement[/bold]",
+                title="[bold]Gaps & Areas for Improvement[/bold]",
                 border_style="yellow",
                 padding=(1, 2)
             ))
@@ -305,7 +305,7 @@ def display_evaluation_results(result: EvalResult):
         if result.narrative_guidance:
             console.print(Panel(
                 result.narrative_guidance,
-                title="[bold]💡 Guidance for Improvement[/bold]",
+                title="[bold]Guidance for Improvement[/bold]",
                 border_style="cyan",
                 padding=(1, 2)
             ))
@@ -585,6 +585,56 @@ def show_status():
         console.print(f"[red]ERROR: Error checking status: {e}[/red]")
 
 
+@app.command("rubric")
+def show_rubric(
+    rubric: str = typer.Option(
+        "data/rubrics/COS4015-B_Coursework 001 - Marking Scheme.pdf",
+        "--rubric", "-r",
+        help="Path to rubric file"
+    ),
+    debug: bool = typer.Option(
+        False,
+        "--debug", "-d",
+        help="Show basic rubric parsing details"
+    ),
+    output: Optional[str] = typer.Option(
+        None,
+        "--output", "-o",
+        help="Optional output file path for rubric JSON"
+    )
+):
+    """
+    Extract rubric criteria and print the exact JSON format sent to the LLM.
+    """
+    from pathlib import Path
+    from app.core.io.rubric_extractor import extract_rubric_structured, save_rubric_json
+
+    display_banner()
+    console.print("\n[bold cyan]Rubric Extraction Mode[/bold cyan]")
+    console.print("[dim]Parsing rubric and printing LLM-ready JSON...[/dim]\n")
+
+    rubric_path = Path(rubric)
+    if not rubric_path.exists():
+        console.print(f"[red]ERROR: Rubric file not found: {rubric}[/red]")
+        raise typer.Exit(1)
+
+    console.print(f"[cyan]Rubric:[/cyan] {rubric}")
+
+    console.print("[dim]Parsing rubric via ADE...[/dim]")
+    rubric_data = extract_rubric_structured(str(rubric_path))
+    rubric_json = json.dumps(rubric_data, indent=2)
+    console.print("\n[bold green]Extracted Rubric JSON[/bold green]\n")
+    console.print(rubric_json)
+
+    if output:
+        output_path = Path(output)
+        output_path.write_text(rubric_json, encoding="utf-8")
+        console.print(f"\n[green]Saved rubric JSON to:[/green] {output_path}")
+    else:
+        saved_path = save_rubric_json(rubric_data)
+        console.print(f"\n[green]Saved rubric JSON to:[/green] {saved_path}")
+
+
 @app.command("test")
 def test_evaluation(
     question: str = typer.Option(
@@ -635,7 +685,7 @@ def test_evaluation(
     """
     from pathlib import Path
     from app.core.io.ingest import ingest_any
-    from app.core.io.rubric_parser import parse_rubric_to_items
+    from app.core.io.rubric_extractor import extract_rubric_structured, rubric_items_from_extraction
     from app.core.models.schemas import Question, Submission, Rubric
     from app.core.models.ids import new_question_id, new_rubric_id, new_submission_id
     
@@ -663,33 +713,25 @@ def test_evaluation(
         console.print(f"[cyan]Rubric:[/cyan] {rubric}")
         console.print(f"[cyan]Submission:[/cyan] {submission}\n")
         
-        # Step 1: Ingest documents
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            console=console
-        ) as progress:
-            task = progress.add_task("Processing question document...", total=None)
-            question_doc = ingest_any(str(question_path))
-            progress.update(task, description="[green]✓[/green] Question processed")
-            progress.stop_task(task)
-            
-            task = progress.add_task("Processing rubric document...", total=None)
-            rubric_doc = ingest_any(str(rubric_path))
-            progress.update(task, description="[green]✓[/green] Rubric processed")
-            progress.stop_task(task)
-            
-            task = progress.add_task("Processing submission document...", total=None)
-            submission_doc = ingest_any(str(submission_path))
-            progress.update(task, description="[green]✓[/green] Submission processed")
-            progress.stop_task(task)
+        # Step 1: Ingest documents (avoid spinner to prevent Windows encoding issues)
+        console.print("Processing question document...")
+        question_doc = ingest_any(str(question_path))
+        console.print("[green]OK[/green] Question processed")
+        
+        console.print("Processing rubric document...")
+        rubric_doc = ingest_any(str(rubric_path))
+        console.print("[green]OK[/green] Rubric processed")
+        
+        console.print("Processing submission document...")
+        submission_doc = ingest_any(str(submission_path))
+        console.print("[green]OK[/green] Submission processed")
         
         console.print()
         
         # Show parsed content if requested
         if show_content:
             console.print("\n" + "="*80)
-            console.print("[bold yellow]📄 PARSED DOCUMENTS CONTENT[/bold yellow]")
+            console.print("[bold yellow]PARSED DOCUMENTS CONTENT[/bold yellow]")
             console.print("="*80 + "\n")
             
             # Question Content
@@ -810,8 +852,9 @@ def test_evaluation(
                 first_text = text_blocks[0].text[:200] if text_blocks[0].text else ""
                 console.print(f"[dim]{first_text}...[/dim]\n")
         
-        rubric_items = parse_rubric_to_items(rubric_doc)
-        console.print(f"[green]✓[/green] Found {len(rubric_items)} rubric criteria\n")
+        rubric_data = extract_rubric_structured(str(rubric_path))
+        rubric_items = rubric_items_from_extraction(rubric_data)
+        console.print(f"[green]OK[/green] Found {len(rubric_items)} rubric criteria\n")
         
         # Display rubric items
         rubric_table = Table(title="Rubric Criteria", box=box.ROUNDED)
@@ -883,12 +926,12 @@ def test_evaluation(
             question_id=question_obj.id,
             submission_id=submission_obj.id
         )
-        console.print(f"[green]✓[/green] Fusion context built\n")
+        console.print(f"[green]OK[/green] Fusion context built\n")
         
         # Show fusion context details if debug or show_content
         if debug or show_content:
             console.print("\n" + "="*80)
-            console.print("[bold magenta]🔗 FUSION CONTEXT (What LLM Receives)[/bold magenta]")
+            console.print("[bold magenta]FUSION CONTEXT (What LLM Receives)[/bold magenta]")
             console.print("="*80 + "\n")
             
             console.print(Panel("[bold]Context Metadata[/bold]", border_style="magenta"))
@@ -922,7 +965,7 @@ def test_evaluation(
             if fusion_context.submission_visuals:
                 console.print(Panel(f"[bold]Submission Visuals Sent to LLM ({len(fusion_context.submission_visuals)} visuals)[/bold]", border_style="magenta"))
                 for idx, visual in enumerate(fusion_context.submission_visuals, 1):
-                    console.print(f"\n[magenta]Visual {idx} → LLM:[/magenta]")
+                    console.print(f"\n[magenta]Visual {idx} -> LLM:[/magenta]")
                     console.print(f"  [dim]ID:[/dim] {visual.id}")
                     console.print(f"  [dim]Type:[/dim] {visual.type}")
                     
@@ -931,7 +974,7 @@ def test_evaluation(
                         caption_display = visual.caption if len(visual.caption) <= 400 else visual.caption[:400] + "..."
                         console.print(f"    {caption_display}")
                     else:
-                        console.print(f"  [yellow]⚠ No caption generated for this visual[/yellow]")
+                        console.print(f"  [yellow]Warning: No caption generated for this visual[/yellow]")
                     
                     if visual.ocr_text:
                         console.print(f"  [dim]OCR Text (sent to LLM):[/dim]")
@@ -942,7 +985,7 @@ def test_evaluation(
                         console.print(f"  [dim]Rubric Links:[/dim] {', '.join(visual.rubric_links)}")
                 console.print()
             else:
-                console.print("[yellow]⚠ No submission visuals in fusion context[/yellow]\n")
+                console.print("[yellow]Warning: No submission visuals in fusion context[/yellow]\n")
             
             console.print("="*80 + "\n")
         
@@ -1018,7 +1061,7 @@ def test_evaluation(
             with open(output_path, 'w', encoding='utf-8') as f:
                 json.dump(output_data, f, indent=2, ensure_ascii=False)
             
-            console.print(f"[green]✓[/green] Results saved to: {output}")
+            console.print(f"[green]OK[/green] Results saved to: {output}")
         
         console.print("\n[bold green]Test evaluation complete![/bold green]")
         

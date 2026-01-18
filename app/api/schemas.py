@@ -20,7 +20,7 @@ class RubricCreateParams(BaseModel):
     course: Optional[str] = None
     assignment: Optional[str] = None
     version: Optional[str] = "v1"
-    prefer_tables: bool = True  # Pass-through to ParseConfig
+    prefer_tables: bool = True  # Legacy flag (ignored by ADE extraction)
 
 
 class RubricResponse(BaseModel):

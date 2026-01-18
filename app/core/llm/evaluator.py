@@ -455,7 +455,7 @@ def evaluate_submission(rubric_id: str, question_id: str, submission_id: str) ->
         weight = float(weights.get(s.rubric_item_id, 0))
         total += weight * float(s.score)
     
-    # Normalize to 0–100 range
+    # Normalize to 0-100 range
     total = round(total, 2)
 
     # Create EvalResult

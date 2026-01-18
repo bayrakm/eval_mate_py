@@ -50,7 +50,7 @@ def ensure_directories_exist() -> None:
     # Create all subdirectories
     for dir_name, dir_path in DIRECTORIES.items():
         dir_path.mkdir(exist_ok=True)
-        print(f"✅ Directory '{dir_name}' ready at: {dir_path}")
+        print(f"Directory '{dir_name}' ready at: {dir_path}")
 
 
 def get_config() -> Dict[str, Any]:
@@ -72,4 +72,4 @@ def get_config() -> Dict[str, Any]:
 if __name__ == "__main__":
     # For testing - create directories when run directly
     ensure_directories_exist()
-    print("📁 All directories created successfully!")
+    print("All directories created successfully!")

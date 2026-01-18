@@ -87,10 +87,10 @@ def init_db(db_path: Union[str, Path] = None) -> None:
             """)
             
             conn.commit()
-            print(f"✅ Database initialized: {db_path}")
+            print(f" Database initialized: {db_path}")
             
     except sqlite3.Error as e:
-        print(f"❌ Database initialization error: {e}")
+        print(f" Database initialization error: {e}")
         raise
 
 
@@ -119,7 +119,7 @@ def get_connection(db_path: Union[str, Path] = None) -> sqlite3.Connection:
         conn.row_factory = sqlite3.Row  # Enable column access by name
         return conn
     except sqlite3.Error as e:
-        print(f"❌ Database connection error: {e}")
+        print(f" Database connection error: {e}")
         raise
 
 
@@ -177,11 +177,11 @@ def insert_record(table: str, record_id: str, json_data: Dict[str, Any], **field
                 raise ValueError(f"Unknown table: {table}")
             
             conn.commit()
-            print(f"✅ Record inserted into {table}: {record_id}")
+            print(f" Record inserted into {table}: {record_id}")
             return True
             
     except (sqlite3.Error, ValueError) as e:
-        print(f"❌ Error inserting record into {table}: {e}")
+        print(f" Error inserting record into {table}: {e}")
         return False
 
 
@@ -212,11 +212,11 @@ def get_record(table: str, record_id: str) -> Optional[Dict[str, Any]]:
                 del record['json_data']  # Remove raw JSON string
                 return record
             else:
-                print(f"⚠️  Record not found in {table}: {record_id}")
+                print(f"  Record not found in {table}: {record_id}")
                 return None
                 
     except (sqlite3.Error, json.JSONDecodeError) as e:
-        print(f"❌ Error retrieving record from {table}: {e}")
+        print(f" Error retrieving record from {table}: {e}")
         return None
 
 
@@ -250,11 +250,11 @@ def list_records(table: str, limit: int = 100, offset: int = 0) -> List[Dict[str
                 del record['json_data']  # Remove raw JSON string
                 records.append(record)
             
-            print(f"📋 Retrieved {len(records)} records from {table}")
+            print(f" Retrieved {len(records)} records from {table}")
             return records
             
     except (sqlite3.Error, json.JSONDecodeError) as e:
-        print(f"❌ Error listing records from {table}: {e}")
+        print(f" Error listing records from {table}: {e}")
         return []
 
 
@@ -279,14 +279,14 @@ def delete_record(table: str, record_id: str) -> bool:
             
             if cursor.rowcount > 0:
                 conn.commit()
-                print(f"🗑️  Record deleted from {table}: {record_id}")
+                print(f"  Record deleted from {table}: {record_id}")
                 return True
             else:
-                print(f"⚠️  Record not found for deletion in {table}: {record_id}")
+                print(f"  Record not found for deletion in {table}: {record_id}")
                 return False
                 
     except sqlite3.Error as e:
-        print(f"❌ Error deleting record from {table}: {e}")
+        print(f" Error deleting record from {table}: {e}")
         return False
 
 
@@ -310,7 +310,7 @@ def get_table_count(table: str) -> int:
             count = cursor.fetchone()[0]
             return count
     except sqlite3.Error as e:
-        print(f"❌ Error getting table count for {table}: {e}")
+        print(f" Error getting table count for {table}: {e}")
         return 0
 
 
@@ -384,7 +384,7 @@ def list_records_metadata(category: str, where_clause: str = "", params: tuple =
             return records
             
     except (sqlite3.Error, json.JSONDecodeError) as e:
-        print(f"❌ Error listing records from {category}: {e}")
+        print(f" Error listing records from {category}: {e}")
         return []
 
 

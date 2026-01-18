@@ -84,6 +84,24 @@ def extract_tables_from_canonical(canonical) -> List[TableFrame]:
             logger.info(f"Extracting tables from PDF: {source_file}")
             pdf_tables = extract_tables_from_pdf(str(source_path))
             tables.extend(pdf_tables)
+
+    # Also include structured tables extracted via visual pipeline, if present
+    if hasattr(canonical, 'blocks') and canonical.blocks:
+        for block in canonical.blocks:
+            if getattr(block, "kind", None) != "visual":
+                continue
+            visual = getattr(block, "visual", None)
+            structured_table = getattr(visual, "structured_table", None) if visual else None
+            if not structured_table or len(structured_table) < 2:
+                continue
+            headers = [str(cell).strip().lower() for cell in structured_table[0]]
+            rows = []
+            for row in structured_table[1:]:
+                cleaned_row = [str(cell).strip() for cell in row]
+                if any(cleaned_row):
+                    rows.append(cleaned_row)
+            if rows:
+                tables.append(TableFrame(headers=headers, rows=rows))
     
     logger.info(f"Extracted {len(tables)} tables from {len(canonical.source_files)} source files")
     return tables
@@ -189,12 +207,12 @@ def _extract_with_camelot(path: str) -> List[TableFrame]:
     
     try:
         # Try stream flavor first (better for simple tables)
-        camelot_tables = camelot.read_pdf(path, flavor='stream')
+        camelot_tables = camelot.read_pdf(path, flavor='stream', pages='all')
         logger.debug(f"Camelot stream detected {len(camelot_tables)} tables")
         
         if len(camelot_tables) == 0:
             # Try lattice flavor (better for complex tables)
-            camelot_tables = camelot.read_pdf(path, flavor='lattice')
+            camelot_tables = camelot.read_pdf(path, flavor='lattice', pages='all')
             logger.debug(f"Camelot lattice detected {len(camelot_tables)} tables")
         
         for table in camelot_tables:
