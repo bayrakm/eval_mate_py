@@ -75,10 +75,10 @@ export function ActionButtons({ onEvaluate, canEvaluate, loading }) {
             <Loader type="dots" color="orange" size="lg" />
           </Flex>
           <Title order={6} ta="center" mb="md">
-            While we're working, here are some AI facts:
+            While we&apos;re working, here are some AI facts:
           </Title>
           <Text size="sm" ta="center" style={{ minHeight: "60px" }}>
-            "{triviasArray[currentTrivia]}"
+            &quot;{triviasArray[currentTrivia]}&quot;
           </Text>
         </Card>
       )}
