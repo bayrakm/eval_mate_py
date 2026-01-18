@@ -26,7 +26,6 @@ export function UploadSubmission({
   const [studentHandle, setStudentHandle] = useState("");
   const [file, setFile] = useState(null);
 
-  const textInputDisabled = disabled || loading || isCompleted;
   const fileInputDisabled = disabled || loading || isCompleted;
 
   useEffect(() => {
@@ -83,14 +82,10 @@ export function UploadSubmission({
         </Group>
 
         <TextInput
-          placeholder={
-            disabled
-              ? "Please select a rubric and question first"
-              : "Student handle/ID"
-          }
+          placeholder="Student handle/ID"
           value={studentHandle}
           onChange={(e) => setStudentHandle(e.target.value)}
-          disabled={textInputDisabled}
+          disabled={isCompleted}
           size="md"
           required
         />
