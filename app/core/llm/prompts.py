@@ -29,10 +29,10 @@ Return ONLY valid JSON matching the specified schema. No markdown, no explanatio
 
 EVAL_JSON_SCHEMA_TEXT = """\
 {
-  "evaluation": "string (required) - A comprehensive section with bullet points that gives a high-level overview of performance across ALL rubric criteria. For each criterion: first sentence is the instructor-voiced expectation, followed by 3-4 evidence-based sentences. Avoid repeating details covered in strengths/gaps/guidance.",
-  "strengths": "string (required) - A detailed section with bullet points focusing on what you did well. For each strong criterion: first sentence is the instructor-voiced expectation, followed by as much as possible detailed evidence-based praise. Be specific and tie to rubric criteria without repeating the evaluation overview.",
-  "gaps": "string (required) - A comprehensive section with bullet points focusing on what is missing or weak. For each weak criterion: first sentence is the instructor-voiced expectation, followed by as much as possible detailed evidence-based explanation of what is wrong and why it falls short. Do not restate evaluation overview.",
-  "guidance": "string (required) - A detailed section with bullet points that tells the student how to improve. For each gap: first sentence is the instructor-voiced expectation, followed by as much as possible detailed, actionable steps and examples of high-band work. Encourage rework. If all criteria meet the highest bands, add further study suggestions with praise."
+  "evaluation": "string (required) - A comprehensive section with bullet points that gives a high-level overview of performance across ALL rubric criteria. Each bullet must map to one rubric item and include 4-5 sentences: first sentence states the instructor-voiced expectation, followed by 3-4 evidence-based sentences. Avoid repeating details covered in strengths/gaps/guidance.",
+  "strengths": "string (required) - A detailed section with bullet points focusing on what you did well. Each bullet must map to one rubric item and include 4-5 sentences: first sentence states the instructor-voiced expectation, followed by 3-4 evidence-based praise sentences. Be specific and tie to rubric criteria without repeating the evaluation overview.",
+  "gaps": "string (required) - A comprehensive section with bullet points focusing on what is missing or weak. Each bullet must map to one rubric item and include 4-5 sentences: first sentence states the instructor-voiced expectation, followed by 3-4 evidence-based sentences explaining what is wrong and why it falls short. Do not restate evaluation overview.",
+  "guidance": "string (required) - A detailed section with bullet points that tells the student how to improve. Each bullet must map to one rubric item and include 4-5 sentences: first sentence states the instructor-voiced expectation, followed by 3-4 actionable sentences and examples of high-band work. Encourage rework. If all criteria meet the highest bands, add further study suggestions with praise."
 }
 """
 
@@ -54,32 +54,36 @@ STUDENT'S SUBMISSION:
 TASK:
 Write four comprehensive sections that provide educational, constructive feedback on this submission. Speak directly to the student using "you" and "your work."
 
-1. EVALUATION SECTION :
+1. EVALUATION SECTION:
    - Systematically address EVERY rubric criterion listed above.
    - Each bullet addresses one rubric criterion.
+   - Each bullet must include 4-5 sentences.
    - First sentence: state the expectation in the instructor's voice (avoid rubric-referencing phrasing).
    - Next 3-4 sentences: provide evidence-based findings from the submission.
    - Keep this section high-level and avoid repeating detailed points that belong in strengths/gaps/guidance.
    - Be factual and specific; cover all rubric items.
 
 2. STRENGTHS SECTION:
-   - Each bullet addresses one criterion where your work is strong.
+   - Each bullet addresses one rubric criterion.
+   - Each bullet must include 4-5 sentences.
    - First sentence: state the expectation in the instructor's voice.
-   - Next as much as possible sentences: detailed, evidence-based praise tied to that criterion.
+   - Next 3-4 sentences: detailed, evidence-based praise tied to that criterion.
    - Do not repeat the evaluation overview; go deeper into details and examples.
    - Use direct address and encourage what to keep doing.
 
 3. GAPS SECTION:
-   - Each bullet addresses one criterion where your work is weak or incomplete.
+   - Each bullet addresses one rubric criterion.
+   - Each bullet must include 4-5 sentences.
    - First sentence: state the expectation in the instructor's voice.
-   - Next as much as possible sentences: detailed, evidence-based explanation of what is wrong and why it falls short.
+   - Next 3-4 sentences: detailed, evidence-based explanation of what is wrong and why it falls short.
    - Do not repeat the evaluation overview; focus on concrete shortcomings.
    - Be clear and direct; use student-facing language.
 
 4. GUIDANCE SECTION:
-   - For each gap identified, provide specific improvement steps in bullet points.
+   - Provide one bullet per rubric criterion.
+   - Each bullet must include 4-5 sentences.
    - First sentence: state the expectation in the instructor's voice.
-   - Next as much as possible sentences: detailed, actionable steps and examples of high-band work.
+   - Next 3-4 sentences: detailed, actionable steps and examples of high-band work.
    - Encourage the student to rework and improve.
    - If all criteria meet the highest bands, add further study suggestions with praise.
 
@@ -88,7 +92,7 @@ CRITICAL REQUIREMENTS:
 - Use specific evidence and quotes from the student's actual submission
 - Use instructor-voiced expectations instead of rubric-referencing phrasing
 - Do not repeat the same evaluation content across sections
-- Each section must use bullet points tied to rubric criteria
+- Each section must use one bullet per rubric criterion
 - Be constructive, student-facing, and encouraging
 - Make feedback actionable and specific
 - NO SCORES, NO PERCENTAGES, NO NUMERIC RATINGS

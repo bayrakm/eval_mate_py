@@ -496,7 +496,7 @@ def run_evaluation():
                 
                 # Set encoding-safe handlers
                 try:
-                    result = evaluate_submission_narrative(rubric_id, question_id, submission_id)
+                    _, result = evaluate_submission_narrative(rubric_id, question_id, submission_id)
                     progress.update(task, description="SUCCESS: Evaluation completed!")
                 finally:
                     # Restore original stdout/stderr
@@ -995,7 +995,7 @@ def test_evaluation(
         
         # Simple status without spinner to avoid encoding issues on Windows
         console.print("[yellow]Evaluating submission with GPT-4...[/yellow]")
-        eval_result = evaluate_submission_narrative(
+        _, eval_result = evaluate_submission_narrative(
             rubric_id=rubric_obj.id,
             question_id=question_obj.id,
             submission_id=submission_obj.id
