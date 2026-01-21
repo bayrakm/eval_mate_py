@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 ModelName = Literal["gpt-5-multimodal", "gpt-5", "gpt-4o", "gpt-4o-mini"]
 
 # Default model priority order - GPT-4o is currently most available for multimodal
-DEFAULT_MODEL_PRIORITY: List[str] = ["gpt-4o", "gpt-4o-mini", "gpt-5-multimodal", "gpt-5"]
+DEFAULT_MODEL_PRIORITY: List[str] = ["gpt-5.2", "gpt-4o", "gpt-4o-mini", "gpt-5-multimodal", "gpt-5"]
 
 # Default API parameters
 DEFAULT_TEMPERATURE = 0.0
