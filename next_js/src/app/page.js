@@ -49,34 +49,49 @@ export default function HomePage() {
 
   const processUploadQueue = useCallback(async () => {
     if (isProcessingQueue || uploadQueue.length === 0) return;
-    
+
     setIsProcessingQueue(true);
     const queue = [...uploadQueue];
-    
+
     for (const uploadItem of queue) {
       const { type, file, params, handler } = uploadItem;
-      
-      if (type === 'rubric') {
+
+      if (type === "rubric") {
         await handler(file);
-      } else if (type === 'question') {
+      } else if (type === "question") {
         if (state.selectedRubric) {
           await handler(file, params.title, state.selectedRubric.id);
         }
-      } else if (type === 'submission') {
+      } else if (type === "submission") {
         if (state.selectedRubric && state.selectedQuestion) {
-          await handler(file, params.studentHandle, state.selectedRubric.id, state.selectedQuestion.id);
+          await handler(
+            file,
+            params.studentHandle,
+            state.selectedRubric.id,
+            state.selectedQuestion.id,
+          );
         }
       }
-      
-      setUploadQueue(prev => prev.slice(1));
+
+      setUploadQueue((prev) => prev.slice(1));
     }
-    
+
     setIsProcessingQueue(false);
-  }, [uploadQueue, isProcessingQueue, state.selectedRubric, state.selectedQuestion]);
+  }, [
+    uploadQueue,
+    isProcessingQueue,
+    state.selectedRubric,
+    state.selectedQuestion,
+  ]);
 
   useEffect(() => {
     processUploadQueue();
-  }, [uploadQueue, state.selectedRubric, state.selectedQuestion, processUploadQueue]);
+  }, [
+    uploadQueue,
+    state.selectedRubric,
+    state.selectedQuestion,
+    processUploadQueue,
+  ]);
 
   const handleNewEvaluation = useCallback(() => {
     setState((prev) => ({
@@ -101,129 +116,144 @@ export default function HomePage() {
 
   const handleRubricUpload = useCallback(
     async (file) => {
-      setUploadQueue(prev => [{
-        type: 'rubric',
-        file,
-        params: {},
-        handler: async (uploadFile) => {
-          try {
-            setLoading(LOADING_STATES.UPLOADING);
-            addMessage(`Uploading rubric: ${uploadFile.name}`, "user");
+      setUploadQueue((prev) => [
+        {
+          type: "rubric",
+          file,
+          params: {},
+          handler: async (uploadFile) => {
+            try {
+              setLoading(LOADING_STATES.UPLOADING);
+              addMessage(`Uploading rubric: ${uploadFile.name}`, "user");
 
-            setProgress({
-              type: "upload",
-              value: 0,
-              label: `Uploading ${uploadFile.name}...`,
-              target: "rubric",
-            });
-
-            const response = await api.uploadRubric(uploadFile, {}, (progress) => {
               setProgress({
                 type: "upload",
-                value: progress,
-                label: `Uploading ${uploadFile.name}... ${progress}%`,
+                value: 0,
+                label: `Uploading ${uploadFile.name}...`,
                 target: "rubric",
               });
-            });
 
-            const rubric = await api.getRubric(response.meta.id);
+              const response = await api.uploadRubric(
+                uploadFile,
+                {},
+                (progress) => {
+                  setProgress({
+                    type: "upload",
+                    value: progress,
+                    label: `Uploading ${uploadFile.name}... ${progress}%`,
+                    target: "rubric",
+                  });
+                },
+              );
 
-            setState((prev) => ({
-              ...prev,
-              selectedRubric: rubric,
-              fusion: null,
-              result: null,
-            }));
+              const rubric = await api.getRubric(response.meta.id);
 
-            clearProgress();
-            addMessage(
-              `✅ Rubric uploaded successfully: ${rubric.assignment} (${
-                rubric.items?.length || 0
-              } items)`
-            );
-            notifications.show({
-              title: "Success",
-              message: "Rubric uploaded successfully",
-              color: "green",
-            });
-          } catch (error) {
-            clearProgress();
-            const message = error.message || "Failed to upload rubric";
-            addMessage(`❌ ${message}`);
-            notifications.show({
-              title: "Error",
-              message,
-              color: "red",
-            });
-          } finally {
-            setLoading(LOADING_STATES.IDLE);
-          }
-        }
-      }]);
+              setState((prev) => ({
+                ...prev,
+                selectedRubric: rubric,
+                fusion: null,
+                result: null,
+              }));
+
+              clearProgress();
+              addMessage(
+                `✅ Rubric uploaded successfully: ${rubric.assignment} (${
+                  rubric.items?.length || 0
+                } items)`,
+              );
+              notifications.show({
+                title: "Success",
+                message: "Rubric uploaded successfully",
+                color: "green",
+              });
+            } catch (error) {
+              clearProgress();
+              const message = error.message || "Failed to upload rubric";
+              addMessage(`❌ ${message}`);
+              notifications.show({
+                title: "Error",
+                message,
+                color: "red",
+              });
+            } finally {
+              setLoading(LOADING_STATES.IDLE);
+            }
+          },
+        },
+      ]);
     },
-    [addMessage, setLoading, setState, setProgress, clearProgress]
+    [addMessage, setLoading, setState, setProgress, clearProgress],
   );
 
   const handleQuestionUpload = useCallback(
     async (file, title) => {
-      setUploadQueue(prev => [...prev, {
-        type: 'question',
-        file,
-        params: { title },
-        handler: async (uploadFile, uploadTitle, currentRubricId) => {
-          try {
-            setLoading(LOADING_STATES.UPLOADING);
-            addMessage(`Uploading question: ${uploadFile.name}`, "user");
+      setUploadQueue((prev) => [
+        ...prev,
+        {
+          type: "question",
+          file,
+          params: { title },
+          handler: async (uploadFile, uploadTitle, currentRubricId) => {
+            try {
+              setLoading(LOADING_STATES.UPLOADING);
+              addMessage(`Uploading question: ${uploadFile.name}`, "user");
 
-            setProgress({
-              type: "upload",
-              value: 0,
-              label: `Uploading ${uploadFile.name}...`,
-              target: "question",
-            });
-
-            const response = await api.uploadQuestion(uploadFile, {
-              rubric_id: currentRubricId,
-              title: uploadTitle,
-            }, (progress) => {
               setProgress({
                 type: "upload",
-                value: progress,
-                label: `Uploading ${uploadFile.name}... ${progress}%`,
+                value: 0,
+                label: `Uploading ${uploadFile.name}...`,
                 target: "question",
               });
-            });
 
-            const question = await api.getQuestion(response.meta.id);
+              const response = await api.uploadQuestion(
+                uploadFile,
+                {
+                  rubric_id: currentRubricId,
+                  title: uploadTitle,
+                },
+                (progress) => {
+                  setProgress({
+                    type: "upload",
+                    value: progress,
+                    label: `Uploading ${uploadFile.name}... ${progress}%`,
+                    target: "question",
+                  });
+                },
+              );
 
-            setState((prev) => ({
-              ...prev,
-              selectedQuestion: question,
-              fusion: null,
-              result: null,
-            }));
+              const question = await api.getQuestion(response.meta.id);
 
-            clearProgress();
-            addMessage(`✅ Question uploaded successfully: ${question.title}`);
-            notifications.show({
-              title: "Success",
-              message: "Question uploaded successfully",
-              color: "green",
-            });
-          } catch (error) {
-            clearProgress();
-            const message = error.message || "Failed to upload question";
-            addMessage(`❌ ${message}`);
-            notifications.show({
-              title: "Error",
-              message,
-              color: "red",
-            });
-          } finally {
-            setLoading(LOADING_STATES.IDLE);
-          }
-        }
-      }]);
+              setState((prev) => ({
+                ...prev,
+                selectedQuestion: question,
+                fusion: null,
+                result: null,
+              }));
+
+              clearProgress();
+              addMessage(
+                `✅ Question uploaded successfully: ${question.title}`,
+              );
+              notifications.show({
+                title: "Success",
+                message: "Question uploaded successfully",
+                color: "green",
+              });
+            } catch (error) {
+              clearProgress();
+              const message = error.message || "Failed to upload question";
+              addMessage(`❌ ${message}`);
+              notifications.show({
+                title: "Error",
+                message,
+                color: "red",
+              });
+            } finally {
+              setLoading(LOADING_STATES.IDLE);
+            }
+          },
+        },
+      ]);
     },
     [
       state.selectedRubric,
@@ -232,75 +262,87 @@ export default function HomePage() {
       setState,
       setProgress,
       clearProgress,
-    ]
+    ],
   );
 
   const handleSubmissionUpload = useCallback(
     async (file, studentHandle) => {
-      setUploadQueue(prev => [...prev, {
-        type: 'submission',
-        file,
-        params: { studentHandle },
-        handler: async (uploadFile, uploadStudentHandle, currentRubricId, currentQuestionId) => {
-          try {
-            setLoading(LOADING_STATES.UPLOADING);
-            addMessage(
-              `Uploading submission for ${uploadStudentHandle}: ${uploadFile.name}`,
-              "user"
-            );
+      setUploadQueue((prev) => [
+        ...prev,
+        {
+          type: "submission",
+          file,
+          params: { studentHandle },
+          handler: async (
+            uploadFile,
+            uploadStudentHandle,
+            currentRubricId,
+            currentQuestionId,
+          ) => {
+            try {
+              setLoading(LOADING_STATES.UPLOADING);
+              addMessage(
+                `Uploading submission for ${uploadStudentHandle}: ${uploadFile.name}`,
+                "user",
+              );
 
-            setProgress({
-              type: "upload",
-              value: 0,
-              label: `Uploading ${uploadFile.name}...`,
-              target: "submission",
-            });
-
-            const response = await api.uploadSubmission(uploadFile, {
-              rubric_id: currentRubricId,
-              question_id: currentQuestionId,
-              student_handle: uploadStudentHandle,
-            }, (progress) => {
               setProgress({
                 type: "upload",
-                value: progress,
-                label: `Uploading ${uploadFile.name}... ${progress}%`,
+                value: 0,
+                label: `Uploading ${uploadFile.name}...`,
                 target: "submission",
               });
-            });
 
-            const submission = await api.getSubmission(response.meta.id);
+              const response = await api.uploadSubmission(
+                uploadFile,
+                {
+                  rubric_id: currentRubricId,
+                  question_id: currentQuestionId,
+                  student_handle: uploadStudentHandle,
+                },
+                (progress) => {
+                  setProgress({
+                    type: "upload",
+                    value: progress,
+                    label: `Uploading ${uploadFile.name}... ${progress}%`,
+                    target: "submission",
+                  });
+                },
+              );
 
-            setState((prev) => ({
-              ...prev,
-              selectedSubmission: submission,
-              fusion: null,
-              result: null,
-            }));
+              const submission = await api.getSubmission(response.meta.id);
 
-            clearProgress();
-            addMessage(
-              `✅ Submission uploaded successfully for ${submission.student_handle}`
-            );
-            notifications.show({
-              title: "Success",
-              message: "Submission uploaded successfully",
-              color: "green",
-            });
-          } catch (error) {
-            clearProgress();
-            const message = error.message || "Failed to upload submission";
-            addMessage(`❌ ${message}`);
-            notifications.show({
-              title: "Error",
-              message,
-              color: "red",
-            });
-          } finally {
-            setLoading(LOADING_STATES.IDLE);
-          }
-        }
-      }]);
+              setState((prev) => ({
+                ...prev,
+                selectedSubmission: submission,
+                fusion: null,
+                result: null,
+              }));
+
+              clearProgress();
+              addMessage(
+                `✅ Submission uploaded successfully for ${submission.student_handle}`,
+              );
+              notifications.show({
+                title: "Success",
+                message: "Submission uploaded successfully",
+                color: "green",
+              });
+            } catch (error) {
+              clearProgress();
+              const message = error.message || "Failed to upload submission";
+              addMessage(`❌ ${message}`);
+              notifications.show({
+                title: "Error",
+                message,
+                color: "red",
+              });
+            } finally {
+              setLoading(LOADING_STATES.IDLE);
+            }
+          },
+        },
+      ]);
     },
     [
       state.selectedRubric,
@@ -310,7 +352,7 @@ export default function HomePage() {
       setState,
       setProgress,
       clearProgress,
-    ]
+    ],
   );
 
   const handleRubricSelect = useCallback(
@@ -326,10 +368,10 @@ export default function HomePage() {
       addMessage(
         `Selected rubric: ${rubric.assignment} (${
           rubric.items?.length || 0
-        } items)`
+        } items)`,
       );
     },
-    [addMessage, setState]
+    [addMessage, setState],
   );
 
   const handleQuestionSelect = useCallback(
@@ -343,7 +385,7 @@ export default function HomePage() {
       }));
       addMessage(`Selected question: ${question.title}`);
     },
-    [addMessage, setState]
+    [addMessage, setState],
   );
 
   const handleSubmissionSelect = useCallback(
@@ -356,7 +398,7 @@ export default function HomePage() {
       }));
       addMessage(`Selected submission from: ${submission.student_handle}`);
     },
-    [addMessage, setState]
+    [addMessage, setState],
   );
 
   const handleEvaluate = useCallback(async () => {
@@ -401,7 +443,7 @@ export default function HomePage() {
         const fusion = await api.buildFusion(
           state.selectedRubric.id,
           state.selectedQuestion.id,
-          state.selectedSubmission.id
+          state.selectedSubmission.id,
         );
 
         const buildDuration = Date.now() - startTime;
@@ -425,13 +467,13 @@ export default function HomePage() {
         }));
 
         addMessage(
-          `✅ Fusion context built! Token estimate: ${fusion.token_estimate}, Visual count: ${fusion.visual_count}`
+          `✅ Fusion context built! Token estimate: ${fusion.token_estimate}, Visual count: ${fusion.visual_count}`,
         );
 
         // Ensure minimum duration for visual feedback
         if (buildDuration < minBuildDuration) {
           await new Promise((resolve) =>
-            setTimeout(resolve, minBuildDuration - buildDuration)
+            setTimeout(resolve, minBuildDuration - buildDuration),
           );
         }
 
@@ -466,13 +508,13 @@ export default function HomePage() {
         (await api.buildFusion(
           state.selectedRubric.id,
           state.selectedQuestion.id,
-          state.selectedSubmission.id
+          state.selectedSubmission.id,
         ));
 
       const evaluationResponse = (await api.evaluate(
         state.selectedRubric.id,
         state.selectedQuestion.id,
-        state.selectedSubmission.id
+        state.selectedSubmission.id,
       )) || {
         eval_id: null,
         result: {
@@ -517,7 +559,7 @@ export default function HomePage() {
         addMessage(
           `✅ Evaluation complete! Total score: ${
             result.total?.toFixed(1) || "N/A"
-          }/100 (${result.items?.length || 0} items graded)`
+          }/100 (${result.items?.length || 0} items graded)`,
         );
         notifications.show({
           title: "Success",
@@ -560,7 +602,7 @@ export default function HomePage() {
   const canUploadQuestion = true;
   const canUploadSubmission = true;
   const canEvaluate = Boolean(
-    rubricId && questionId && state.selectedSubmission?.id
+    rubricId && questionId && state.selectedSubmission?.id,
   );
 
   return (
@@ -668,6 +710,8 @@ export default function HomePage() {
                         onEvaluate={handleEvaluate}
                         canEvaluate={canEvaluate}
                         loading={state.loading}
+                        onOpenChat={() => setShowChatModal(true)}
+                        hasResult={!!state.result}
                       />
                     </Stack>
                   </div>
@@ -677,7 +721,6 @@ export default function HomePage() {
                     <ResultsPanel
                       result={state.result}
                       selectedRubric={state.selectedRubric}
-                      onOpenChat={() => setShowChatModal(true)}
                     />
                   </div>
                 </Stack>

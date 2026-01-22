@@ -56,19 +56,7 @@ export function ResultsPanel({ result, selectedRubric, onOpenChat }) {
         }}
       >
         <Stack gap="md">
-          <Group justify="space-between" align="center">
-            <Title order={3}>Evaluation Results</Title>
-            {onOpenChat && (
-              <Button
-                leftSection={<IconMessage size={18} />}
-                variant="light"
-                size="sm"
-                onClick={onOpenChat}
-              >
-                Ask Questions
-              </Button>
-            )}
-          </Group>
+          <Title order={3}>Evaluation Results</Title>
 
           {result.narrative_evaluation && (
             <Box>
@@ -161,19 +149,7 @@ export function ResultsPanel({ result, selectedRubric, onOpenChat }) {
       }}
     >
       <Stack gap="md">
-        <Group justify="space-between" align="center">
-          <Title order={3}>Evaluation Results</Title>
-          {onOpenChat && (
-            <Button
-              leftSection={<IconMessage size={18} />}
-              variant="light"
-              size="sm"
-              onClick={onOpenChat}
-            >
-              Ask Questions
-            </Button>
-          )}
-        </Group>
+        <Title order={3}>Evaluation Results</Title>
 
         <div>
           <Text size="xs" c="dimmed" tt="uppercase" fw={600} mb="xs">
@@ -195,7 +171,7 @@ export function ResultsPanel({ result, selectedRubric, onOpenChat }) {
               )}
               {result.items.map((item, idx) => {
                 const rubricItem = selectedRubric?.items?.find(
-                  (ri) => ri.id === item.rubric_item_id
+                  (ri) => ri.id === item.rubric_item_id,
                 );
                 return (
                   <ScoreCard key={idx} item={item} rubricItem={rubricItem} />

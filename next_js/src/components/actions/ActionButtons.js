@@ -1,7 +1,16 @@
 "use client";
 
-import { Group, Button, Stack, Card, Title, Text, Loader, Flex } from "@mantine/core";
-import { IconArrowRight } from "@tabler/icons-react";
+import {
+  Group,
+  Button,
+  Stack,
+  Card,
+  Title,
+  Text,
+  Loader,
+  Flex,
+} from "@mantine/core";
+import { IconArrowRight, IconMessage } from "@tabler/icons-react";
 import { useState, useEffect } from "react";
 import { LOADING_STATES } from "../../lib/constants";
 
@@ -27,7 +36,13 @@ const shuffleArray = (array) => {
   return newArray;
 };
 
-export function ActionButtons({ onEvaluate, canEvaluate, loading }) {
+export function ActionButtons({
+  onEvaluate,
+  canEvaluate,
+  loading,
+  onOpenChat,
+  hasResult,
+}) {
   const [currentTrivia, setCurrentTrivia] = useState(0);
   const [triviasArray] = useState(() => shuffleArray(trivias));
 
@@ -59,6 +74,16 @@ export function ActionButtons({ onEvaluate, canEvaluate, loading }) {
         >
           Run Evaluation
         </Button>
+        {hasResult && onOpenChat && (
+          <Button
+            leftSection={<IconMessage size={18} />}
+            variant="light"
+            size="lg"
+            onClick={onOpenChat}
+          >
+            Ask Questions
+          </Button>
+        )}
       </Group>
 
       {isLoading && (
